@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { Playfair_Display } from "next/font/google";
+import { Lora } from "next/font/google";
 import "./globals.css";
 
-const playfair = Playfair_Display({
+const lora = Lora({
   subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-playfair",
+  weight: ["400"],
 });
 
 export const metadata: Metadata = {
@@ -24,23 +23,23 @@ export default function RootLayout({
         style={{
           margin: 0,
           padding: 0,
-          height: "100%",
-          width: "100%",
+          height: "100vh",
+          width: "100vw",
           backgroundColor: "#0a0a0a",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          fontFamily: "'Playfair Display', serif",
-          color: "#ffffff", // белый текст
+          fontFamily: "'Lora', serif",
+          color: "#ffffff",
           textAlign: "center",
         }}
       >
         <h1
           style={{
-            fontSize: "8vw",
-            fontWeight: 700,
+            fontSize: "10vh",
+            fontWeight: 400,
             lineHeight: 1.1,
-            textShadow: "2px 2px 8px rgba(0,0,0,0.5)", // лёгкая тень для глубины
+            textShadow: "1px 1px 6px rgba(0,0,0,0.4)",
           }}
         >
           Yamme Tee was here...
