@@ -23,12 +23,50 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
-    </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yamme Tee</title>
+  <!-- Google Font: Bangers (выглядит как баскетбольный / граффити стиль) -->
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+  <style>
+    /* Сбрасываем отступы */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      background: #0a0a0a; /* темный фон */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Bangers', cursive;
+      color: #ff6f61; /* яркий контрастный цвет */
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 8vw; /* масштабируемый размер для адаптивности */
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.6); /* лёгкая тень для глубины */
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 12vw; /* увеличиваем на мобилке, чтобы оставалось читаемо */
+      }
+    }
+  </style>
+</head>
+<body>
+ 
+</body>
+</html>
+
   );
 }
