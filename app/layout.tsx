@@ -44,7 +44,7 @@ export default function RootLayout({
             font-weight: 400;
             text-align: center;
             line-height: 1.1;
-            animation: flickerAnimation 10s infinite;
+            animation: flickerAnimation 20s infinite;
           }
 
           @keyframes flickerAnimation {
