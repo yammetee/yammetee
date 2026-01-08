@@ -44,22 +44,45 @@ export default function RootLayout({
             font-weight: 400;
             text-align: center;
             line-height: 1.1;
-            animation: flickerAnimation 20s infinite;
+            animation: flickerAnimation 60s infinite;
           }
 
           @keyframes flickerAnimation {
-            0%   { opacity: 1; }
-            10%  { opacity: 0.1; }
-            20%  { opacity: 0.8; }
-            30%  { opacity: 0.2; }
-            40%  { opacity: 1; }
-            50%  { opacity: 0.3; }
-            60%  { opacity: 1; }
-            70%  { opacity: 0.2; }
-            80%  { opacity: 0.9; }
-            90%  { opacity: 0.1; }
-            100% { opacity: 1; }
-          }
+  0%   { opacity: 1; }
+  3%   { opacity: 0.2; }
+  6%   { opacity: 0.7; }
+  9%   { opacity: 0.3; }
+  12%  { opacity: 0.9; }
+  15%  { opacity: 0.4; }
+  18%  { opacity: 1; }
+  21%  { opacity: 0.3; }
+  24%  { opacity: 0.8; }
+  27%  { opacity: 0.5; }
+  30%  { opacity: 1; }
+  33%  { opacity: 0.2; }
+  36%  { opacity: 0.9; }
+  39%  { opacity: 0.4; }
+  42%  { opacity: 1; }
+  45%  { opacity: 0.3; }
+  48%  { opacity: 0.8; }
+  51%  { opacity: 0.5; }
+  54%  { opacity: 1; }
+  57%  { opacity: 0.2; }
+  60%  { opacity: 0.9; }
+  63%  { opacity: 0.4; }
+  66%  { opacity: 1; }
+  69%  { opacity: 0.3; }
+  72%  { opacity: 0.8; }
+  75%  { opacity: 0.5; }
+  78%  { opacity: 1; }
+  81%  { opacity: 0.2; }
+  84%  { opacity: 0.9; }
+  87%  { opacity: 0.4; }
+  90%  { opacity: 1; }
+  93%  { opacity: 0.3; }
+  96%  { opacity: 0.8; }
+  100% { opacity: 1; }
+}
 
           /* Адаптивность для мобильных */
           @media (max-width: 600px) {
