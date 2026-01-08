@@ -28,10 +28,8 @@ export default function RootLayout({
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yamme Tee</title>
-  <!-- Google Font: Bangers (выглядит как баскетбольный / граффити стиль) -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
   <style>
-    /* Сбрасываем отступы */
     * {
       margin: 0;
       padding: 0;
