@@ -1,11 +1,5 @@
 import type { Metadata } from "next";
-import { Lora } from "next/font/google";
 import "./globals.css";
-
-const lora = Lora({
-  subsets: ["latin"],
-  weight: ["400"],
-});
 
 export const metadata: Metadata = {
   title: "Yamme Tee",
@@ -29,14 +23,21 @@ export default function RootLayout({
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          fontFamily: "'Lora', serif",
+          fontFamily: "'Zalando Sans SemiExpanded', sans-serif",
           color: "#ffffff",
           textAlign: "center",
         }}
       >
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Zalando+Sans+SemiExpanded:ital,wght@0,200..900;1,200..900&display=swap"
+          rel="stylesheet"
+        />
+
         <h1
           style={{
-            fontSize: "10vh",
+            fontSize: "1em",
             fontWeight: 400,
             lineHeight: 1.1,
             textShadow: "1px 1px 6px rgba(0,0,0,0.4)",
