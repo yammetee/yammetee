@@ -35,6 +35,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Zalando+Sans+SemiExpanded:ital,wght@0,200..900;1,200..900&display=swap"
           rel="stylesheet"
         />
+        <link rel="icon" href="/yamme.svg" type="image/svg+xml" />
 
         <h1 className="flicker">Yamme Tee was here...</h1>
 
