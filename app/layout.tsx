@@ -1,5 +1,15 @@
 import type { Metadata } from "next";
+import { Poppins } from "next/font/google";
 import "./globals.css";
+import Navigation from "./components/Navigation";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import { AudioProvider } from "./contexts/AudioContext";
+import GlobalAudioPlayer from "./components/GlobalAudioPlayer";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Yamme Tee",
@@ -14,86 +24,25 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+        className={poppins.className}
         style={{
           margin: 0,
           padding: 0,
-          height: "100vh",
+          minHeight: "100vh",
           width: "100vw",
           backgroundColor: "#0a0a0a",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          overflow: "hidden",
-          fontFamily: "'Zalando Sans SemiExpanded', sans-serif",
           color: "#ffffff",
         }}
       >
-        {/* Подключение Google Font */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Zalando+Sans+SemiExpanded:ital,wght@0,200..900;1,200..900&display=swap"
-          rel="stylesheet"
-        />
-       <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-
-        <h1 className="flicker">Yamme Tee was here...</h1>
-
-        <style>{`
-          h1.flicker {
-            font-size: 1em;
-            font-weight: 400;
-            text-align: center;
-            line-height: 1.1;
-            animation: flickerAnimation 60s infinite;
-          }
-
-          @keyframes flickerAnimation {
-  0%   { opacity: 1; }
-  3%   { opacity: 0.2; }
-  6%   { opacity: 0.7; }
-  9%   { opacity: 0.3; }
-  12%  { opacity: 0.9; }
-  15%  { opacity: 0.4; }
-  18%  { opacity: 1; }
-  21%  { opacity: 0.3; }
-  24%  { opacity: 0.8; }
-  27%  { opacity: 0.5; }
-  30%  { opacity: 1; }
-  33%  { opacity: 0.2; }
-  36%  { opacity: 0.9; }
-  39%  { opacity: 0.4; }
-  42%  { opacity: 1; }
-  45%  { opacity: 0.3; }
-  48%  { opacity: 0.8; }
-  51%  { opacity: 0.5; }
-  54%  { opacity: 1; }
-  57%  { opacity: 0.2; }
-  60%  { opacity: 0.9; }
-  63%  { opacity: 0.4; }
-  66%  { opacity: 1; }
-  69%  { opacity: 0.3; }
-  72%  { opacity: 0.8; }
-  75%  { opacity: 0.5; }
-  78%  { opacity: 1; }
-  81%  { opacity: 0.2; }
-  84%  { opacity: 0.9; }
-  87%  { opacity: 0.4; }
-  90%  { opacity: 1; }
-  93%  { opacity: 0.3; }
-  96%  { opacity: 0.8; }
-  100% { opacity: 1; }
-}
-
-          /* Адаптивность для мобильных */
-          @media (max-width: 600px) {
-            h1.flicker {
-              font-size: 1em;
-            }
-          }
-        `}</style>
-
-        {children}
+        <LanguageProvider>
+          <AudioProvider>
+            <Navigation />
+            <main style={{ paddingTop: "64px", paddingBottom: "192px" }}>
+              {children}
+            </main>
+            <GlobalAudioPlayer />
+          </AudioProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
