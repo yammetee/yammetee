@@ -1,0 +1,17 @@
+{
+  "id": "release-61e264aa",
+  "title": "юг",
+  "artist": "Yamme Tee",
+  "releaseType": "Single",
+  "releaseDate": "2026-02-01",
+  "cover": "/favicon.svg",
+  "tracks": [
+    {
+      "id": "yamme-tee-dmitryarshin-c15eaf8a",
+      "title": "Yamme Tee & DmitryArshin - юг",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/юг/Yamme Tee & DmitryArshin - юг.mp3",
+      "lyrics": ""
+    }
+  ]
+}

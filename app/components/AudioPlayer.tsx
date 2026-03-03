@@ -1,36 +1,87 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from "react";
-import { Play, Pause, Heart, Repeat, Volume2 } from "lucide-react";
+import { Play, Pause, Heart, Repeat, Volume2, X, SkipBack, SkipForward } from "lucide-react";
 import Image from "next/image";
 import { useAudio } from "../contexts/AudioContext";
+import { useLanguage } from "../contexts/LanguageContext";
+
+interface WaveSurferInstance {
+  destroy: () => void;
+  load: (src: string) => void;
+  on: (event: string, callback: (...args: unknown[]) => void) => void;
+  getDuration: () => number;
+  getCurrentTime: () => number;
+  play: () => void;
+  pause: () => void;
+  seekTo: (progress: number) => void;
+  setVolume: (value: number) => void;
+}
 
 export default function AudioPlayer() {
-  const { currentTrack, isPlaying, setIsPlaying } = useAudio();
-  const waveformRef = useRef(null);
-  const wavesurfer = useRef(null);
+  const { t } = useLanguage();
+  const {
+    currentTrack,
+    isPlaying,
+    queue,
+    currentIndex,
+    setIsPlaying,
+    playNextTrack,
+    playPrevTrack,
+    clearPlayback,
+  } = useAudio();
+  const waveformRef = useRef<HTMLDivElement | null>(null);
+  const wavesurfer = useRef<WaveSurferInstance | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLooping, setIsLooping] = useState(false);
   const [volume, setVolume] = useState(1);
   const isLoopingRef = useRef(false);
-  const creatingTrackIdRef = useRef(null);
+  const creatingTrackIdRef = useRef<string | null>(null);
   const volumeRef = useRef(1);
   const isPlayingRef = useRef(false);
+  const mountedRef = useRef(true);
+  const lastRenderedSecondRef = useRef(-1);
 
   useEffect(() => {
     volumeRef.current = volume;
   }, [volume]);
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
+
+  useEffect(() => {
+    if (!currentTrack) {
+      if (wavesurfer.current) {
+        wavesurfer.current.destroy();
+        wavesurfer.current = null;
+      }
+      if (waveformRef.current) {
+        waveformRef.current.innerHTML = '';
+      }
+      creatingTrackIdRef.current = null;
+      lastRenderedSecondRef.current = -1;
+      setCurrentTime(0);
+      setDuration(0);
+    }
+  }, [currentTrack]);
 
   useEffect(() => {
     if (currentTrack && waveformRef.current) {
       if (creatingTrackIdRef.current === currentTrack.id) return; // already creating for this track
 
       creatingTrackIdRef.current = currentTrack.id;
+      lastRenderedSecondRef.current = -1;
+      setCurrentTime(0);
+      setDuration(0);
 
       // Destroy existing instance
       if (wavesurfer.current) {
@@ -59,10 +110,10 @@ export default function AudioPlayer() {
           responsive: true,
         });
 
-        wavesurfer.current.load(`/tracks/${currentTrack.id}/Yamme Tee - Dead Air.mp3`);
+        wavesurfer.current.load(currentTrack.audio);
 
         wavesurfer.current.on("ready", () => {
-          console.log('WaveSurfer ready, duration:', wavesurfer.current.getDuration());
+          if (!mountedRef.current || !wavesurfer.current) return;
           setDuration(Math.floor(wavesurfer.current.getDuration()));
           if (isPlayingRef.current) {
             wavesurfer.current.play();
@@ -70,7 +121,12 @@ export default function AudioPlayer() {
         });
 
         wavesurfer.current.on("audioprocess", () => {
-          setCurrentTime(Math.floor(wavesurfer.current.getCurrentTime()));
+          if (!mountedRef.current || !wavesurfer.current) return;
+          const nextSecond = Math.floor(wavesurfer.current.getCurrentTime());
+          if (nextSecond !== lastRenderedSecondRef.current) {
+            lastRenderedSecondRef.current = nextSecond;
+            setCurrentTime(nextSecond);
+          }
         });
 
         wavesurfer.current.on("play", () => setIsPlaying(true));
@@ -82,8 +138,11 @@ export default function AudioPlayer() {
 
         wavesurfer.current.on('finish', () => {
           if (isLoopingRef.current) {
+            if (!wavesurfer.current) return;
             wavesurfer.current.seekTo(0);
             wavesurfer.current.play();
+          } else {
+            playNextTrack();
           }
         });
 
@@ -91,7 +150,7 @@ export default function AudioPlayer() {
         wavesurfer.current.setVolume(volumeRef.current);
       });
     }
-  }, [currentTrack, setIsPlaying]);
+  }, [currentTrack, setIsPlaying, playNextTrack]);
 
   useEffect(() => {
     if (wavesurfer.current) {
@@ -133,6 +192,20 @@ export default function AudioPlayer() {
   };
 
   const formatTime = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < queue.length - 1;
+  const handlePrev = () => {
+    if (wavesurfer.current && wavesurfer.current.getCurrentTime() > 3) {
+      wavesurfer.current.seekTo(0);
+      return;
+    }
+    playPrevTrack();
+  };
+  const closePlayer = () => {
+    clearPlayback();
+    setCurrentTime(0);
+    setDuration(0);
+  };
 
   if (!currentTrack) return null;
 
@@ -147,7 +220,7 @@ export default function AudioPlayer() {
         </div>
 
         <div className="flex items-center gap-1">
-          <Image src={`/tracks/${currentTrack.id}/IMG_3310 (1).jpg`} alt={`${currentTrack.title} cover`} width={56} height={56} className="w-14 h-14 rounded-lg object-cover" />
+          <Image src={currentTrack.cover} alt={`${currentTrack.title} cover`} width={56} height={56} className="w-14 h-14 object-cover" />
 
           <div className="flex-1">
             <h3 className="font-semibold text-sm md:text-base truncate">{currentTrack.title}</h3>
@@ -156,21 +229,44 @@ export default function AudioPlayer() {
 
           <div className="flex items-center gap-3">
             <Heart className="w-5 h-5" />
+            <button
+              onClick={handlePrev}
+              disabled={!hasPrev}
+              className="text-gray-400 hover:text-white p-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              title={t.player.previous}
+            >
+              <SkipBack className="w-5 h-5" />
+            </button>
             <button onClick={() => setIsPlaying(!isPlaying)} className="bg-white text-black p-3 rounded-full">
               {isPlaying ? <Pause /> : <Play />}
             </button>
             <button
+              onClick={playNextTrack}
+              disabled={!hasNext}
+              className="text-gray-400 hover:text-white p-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              title={t.player.next}
+            >
+              <SkipForward className="w-5 h-5" />
+            </button>
+            <button
               onClick={toggleLoop}
               className={`${isLooping ? 'text-orange-500' : 'text-gray-400 hover:text-white'}`}
-              title="Loop"
+              title={t.player.loop}
             >
               <Repeat className="w-5 h-5" />
+            </button>
+            <button
+              onClick={closePlayer}
+              className="text-gray-400 hover:text-white p-2"
+              title={t.player.close}
+            >
+              <X className="w-5 h-5" />
             </button>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <button className="text-gray-400 hover:text-white p-2" title="Volume">
+              <button className="text-gray-400 hover:text-white p-2" title={t.player.volume}>
                 <Volume2 className="w-5 h-5" />
               </button>
               <input

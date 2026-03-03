@@ -1,0 +1,17 @@
+{
+  "id": "release-942b7816",
+  "title": "фуга",
+  "artist": "Yamme Tee",
+  "releaseType": "Single",
+  "releaseDate": "2025-05-05",
+  "cover": "/tracks/фуга/фуга2.jpg",
+  "tracks": [
+    {
+      "id": "yamme-tee-ft-cab831c2",
+      "title": "Yamme Tee ft. Крип-а-Крип - Фуга",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/фуга/Yamme Tee ft. Крип-а-Крип - Фуга.mp3",
+      "lyrics": ""
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "id": "release-5a7af64a",
+  "title": "ОТРЫВКИ",
+  "artist": "Yamme Tee",
+  "releaseType": "EP",
+  "releaseDate": "2025-06-27",
+  "cover": "/tracks/ОТРЫВКИ - ЕР/IMG_3702.png",
+  "tracks": [
+    {
+      "id": "01-yamme-tee-63c6cb8c",
+      "title": "Yamme Tee - Слованожи",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/01. Yamme Tee - Слованожи.mp3",
+      "lyrics": ""
+    },
+    {
+      "id": "02-yamme-tee-dryface-f01811fc",
+      "title": "Yamme Tee - DRYFACE",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/02. Yamme Tee - DRYFACE.mp3",
+      "lyrics": ""
+    },
+    {
+      "id": "03-yamme-tee-8b14f187",
+      "title": "Yamme Tee - Скит к отцу финал",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/03. Yamme Tee - Скит к отцу финал.mp3",
+      "lyrics": ""
+    },
+    {
+      "id": "04-yamme-tee-4c947e36",
+      "title": "Yamme Tee - к отцу",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/04. Yamme Tee - к отцу.mp3",
+      "lyrics": ""
+    },
+    {
+      "id": "05-yamme-tee-33c4d5b4",
+      "title": "Yamme Tee - Мое маленькое кладбище",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/05. Yamme Tee - Мое маленькое кладбище.mp3",
+      "lyrics": ""
+    },
+    {
+      "id": "06-yamme-tee-e32ced01",
+      "title": "Yamme Tee - БуМБОКС",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/06. Yamme Tee - БуМБОКС.mp3",
+      "lyrics": ""
+    },
+    {
+      "id": "07-yamme-tee-a1aae17e",
+      "title": "Yamme Tee - Фрактал",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/07. Yamme Tee - Фрактал.mp3",
+      "lyrics": ""
+    },
+    {
+      "id": "08-yamme-tee-7f95378d",
+      "title": "Yamme Tee - Ветер",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/08. Yamme Tee - Ветер.mp3",
+      "lyrics": ""
+    },
+    {
+      "id": "09-yamme-tee-abf87c7e",
+      "title": "Yamme Tee - Вниз",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/09. Yamme Tee - Вниз.mp3",
+      "lyrics": ""
+    },
+    {
+      "id": "1-intro-yamme-tee-intro-f41378c2",
+      "title": "Yamme Tee - intro",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/1. intro +/Yamme Tee - intro.mp3",
+      "lyrics": ""
+    },
+    {
+      "id": "10-yamme-tee-tmrrw-2d189cf9",
+      "title": "Yamme Tee - tmrrw",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/10. Yamme Tee - tmrrw.mp3",
+      "lyrics": ""
+    },
+    {
+      "id": "12-outro-yamme-tee-outro-6d9a8c16",
+      "title": "Yamme Tee - outro",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/ОТРЫВКИ - ЕР/12. outro/Yamme Tee - outro.mp3",
+      "lyrics": ""
+    }
+  ]
+}

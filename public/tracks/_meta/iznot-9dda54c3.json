@@ -1,0 +1,17 @@
+{
+  "id": "iznot-9dda54c3",
+  "title": "iznot",
+  "artist": "Yamme Tee",
+  "releaseType": "Single",
+  "releaseDate": "2026-02-02",
+  "cover": "/favicon.svg",
+  "tracks": [
+    {
+      "id": "yamme-tee-iznot-39318cb4",
+      "title": "Yamme Tee - iznot",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/iznot/Yamme Tee - iznot.mp3",
+      "lyrics": ""
+    }
+  ]
+}

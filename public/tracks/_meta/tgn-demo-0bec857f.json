@@ -1,0 +1,17 @@
+{
+  "id": "tgn-demo-0bec857f",
+  "title": "tgn_demo",
+  "artist": "Yamme Tee",
+  "releaseType": "Single",
+  "releaseDate": "2025-07-21",
+  "cover": "/favicon.svg",
+  "tracks": [
+    {
+      "id": "yamme-tee-tgn-demo-ada1e160",
+      "title": "Yamme Tee - tgn_demo",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/tgn_demo/Yamme Tee - tgn_demo.mp3",
+      "lyrics": ""
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { createSupabaseServerClient } from '../../../../lib/supabase/server';
 
 const commentsFilePath = path.join(process.cwd(), 'app/data/comments.json');
 
@@ -17,6 +18,14 @@ export interface Comment {
 // PATCH /api/comments/[id]/like - лайк комментария
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     const fileContents = fs.readFileSync(commentsFilePath, 'utf8');
     const comments: Comment[] = JSON.parse(fileContents);

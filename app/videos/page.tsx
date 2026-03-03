@@ -10,12 +10,27 @@ const videos: Video[] = [
   {
     id: 'OpeqwV3DfXQ',
     title: 'Bares',
-    description: 'This is a sample video description.',
+    description: 'Official clip.',
   },
   {
     id: 'ADO13YB4PQQ',
     title: 'Raw Delivery',
-    description: 'Another sample video with description.',
+    description: 'Official clip.',
+  },
+  {
+    id: 'v83hQhbP5Uo',
+    title: 'Красная точка',
+    description: 'Official clip.',
+  },
+  {
+    id: 'ibM1m_zyRyI',
+    title: 'DRYFACE',
+    description: 'Official clip.',
+  },
+  {
+    id: 'WLh7WVN83aA',
+    title: 'Бумбокс',
+    description: 'Official clip.',
   },
 ];
 

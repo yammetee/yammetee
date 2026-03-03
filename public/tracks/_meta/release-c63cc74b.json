@@ -1,0 +1,17 @@
+{
+  "id": "release-c63cc74b",
+  "title": "моветон",
+  "artist": "Yamme Tee",
+  "releaseType": "Single",
+  "releaseDate": "2026-02-17",
+  "cover": "/favicon.svg",
+  "tracks": [
+    {
+      "id": "yamme-tee-c24e02e6",
+      "title": "Yamme Tee - моветон",
+      "artist": "Yamme Tee",
+      "audio": "/tracks/моветон/Yamme Tee - моветон.mp3",
+      "lyrics": ""
+    }
+  ]
+}

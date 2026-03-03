@@ -5,28 +5,20 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAudio } from '../contexts/AudioContext';
-
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  lyrics: string;
-}
+import { loadAllReleases } from "../lib/releases";
+import type { Release } from "../types/release";
 
 export default function Tracks() {
   const { t } = useLanguage();
-  const { currentTrack, isPlaying, setCurrentTrack, setIsPlaying } = useAudio();
-  const [tracks, setTracks] = useState<Track[]>([]);
+  const { currentTrack, isPlaying, setQueueAndPlay, setIsPlaying } = useAudio();
+  const [releases, setReleases] = useState<Release[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadTracks = async () => {
       try {
-        const response = await fetch('/tracks/dead_air/dead_air.json');
-        if (response.ok) {
-          const track = await response.json();
-          setTracks([track]);
-        }
+        const loadedReleases = await loadAllReleases();
+        setReleases(loadedReleases);
       } catch (error) {
         console.error('Error loading tracks:', error);
       } finally {
@@ -37,12 +29,23 @@ export default function Tracks() {
     loadTracks();
   }, []);
 
-  const playTrack = (track: Track) => {
-    if (currentTrack?.id === track.id) {
+  const playRelease = (release: Release) => {
+    const firstTrack = release.tracks[0];
+    if (!firstTrack) return;
+
+    const queue = release.tracks.map((track) => ({
+      id: track.id,
+      title: track.title,
+      artist: track.artist || release.artist,
+      audio: track.audio,
+      cover: release.cover,
+      lyrics: track.lyrics || '',
+    }));
+
+    if (currentTrack?.id === firstTrack.id) {
       setIsPlaying(!isPlaying);
     } else {
-      setCurrentTrack(track);
-      setIsPlaying(true);
+      setQueueAndPlay(queue, 0);
     }
   };
 
@@ -56,45 +59,46 @@ export default function Tracks() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">{t.tracks.title}</h1>
+      </div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] md:grid-cols-[repeat(auto-fit,minmax(18.75rem,18.75rem))] gap-4">
-        {tracks.map((track) => (
-          <Link key={track.id} href={`/tracks/${track.id}`}>
-            <div className="bg-neutral-800 rounded-lg overflow-hidden shadow-lg hover:bg-neutral-700 transition-colors cursor-pointer group">
-              {/* Обложка */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {releases.map((release) => (
+          <Link key={release.id} href={`/tracks/${release.id}`}>
+            <div className="bg-neutral-900 overflow-hidden border border-neutral-800 hover:border-neutral-600 transition-colors cursor-pointer group">
               <div className="relative aspect-square">
                 <Image
-                width={300}
-                height={300}
-                  src={`/tracks/${track.id}/IMG_3310 (1).jpg`}
-                  alt={`${track.title} cover`}
-                  className="w-full h-full object-cover rounded"
+                  width={500}
+                  height={500}
+                  src={release.cover}
+                  alt={`${release.title} cover`}
+                  className="w-full h-full object-cover"
                 />
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    playRelease(release);
+                  }}
+                  className="absolute bottom-2 right-2 p-2 rounded-full bg-white text-black hover:scale-105 transition-transform shadow-lg"
+                >
+                  {currentTrack && currentTrack.audio === release.tracks[0]?.audio && isPlaying ? (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  )}
+                </button>
               </div>
 
-              {/* Информация */}
-              <div className="p-4">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      playTrack(track);
-                    }}
-                    className="p-1 rounded bg-green-800 hover:bg-green-700 transition-colors"
-                  >
-                    {currentTrack?.id === track.id && isPlaying ? (
-                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                      </svg>
-                    ) : (
-                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    )}
-                  </button>
-                  <h3 className="text-lg font-semibold">{track.title}</h3>
-                </div>
+              <div className="p-2.5">
+                <div className="text-xs uppercase tracking-[0.12em] text-gray-400">{release.releaseType}</div>
+                <h3 className="text-sm font-semibold mt-1 truncate">{release.title}</h3>
+                <p className="text-xs text-gray-400 truncate">{release.artist}</p>
               </div>
             </div>
           </Link>
