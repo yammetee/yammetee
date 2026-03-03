@@ -4,6 +4,7 @@ import Navigation from "./components/Navigation";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AudioProvider } from "./contexts/AudioContext";
 import GlobalAudioPlayer from "./components/GlobalAudioPlayer";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Yamme Tee",
@@ -36,6 +37,7 @@ export default function RootLayout({
             <GlobalAudioPlayer />
           </AudioProvider>
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
