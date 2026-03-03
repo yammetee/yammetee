@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import { createSupabaseBrowserClient } from '../lib/supabase/client';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -10,8 +10,11 @@ import { Eye, EyeOff } from 'lucide-react';
 export default function LoginPage() {
   const { t } = useLanguage();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const nextPath = searchParams.get('next') || '/account';
+  const [nextPath] = useState(() => {
+    if (typeof window === 'undefined') return '/account';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('next') || '/account';
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
