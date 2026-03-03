@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createSupabaseMiddlewareClient } from './app/lib/supabase/middleware';
+import { getSupabaseEnv } from './app/lib/supabase/env';
 
 const protectedPaths = ['/wall', '/account'];
 const authPaths = ['/login', '/register'];
@@ -14,10 +15,9 @@ function isAuthPath(pathname: string) {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const { url, key } = getSupabaseEnv();
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!url || !key) {
     return NextResponse.next({ request });
   }
 
