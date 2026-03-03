@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from "react";
-import { Play, Pause, Heart, Repeat, Volume2, X, SkipBack, SkipForward } from "lucide-react";
+import { Play, Pause, Repeat, Volume2, X, SkipBack, SkipForward } from "lucide-react";
 import Image from "next/image";
 import { useAudio } from "../contexts/AudioContext";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -35,10 +35,10 @@ export default function AudioPlayer() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLooping, setIsLooping] = useState(false);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(0.3);
   const isLoopingRef = useRef(false);
   const creatingTrackIdRef = useRef<string | null>(null);
-  const volumeRef = useRef(1);
+  const volumeRef = useRef(0.3);
   const isPlayingRef = useRef(false);
   const mountedRef = useRef(true);
   const lastRenderedSecondRef = useRef(-1);
@@ -105,9 +105,10 @@ export default function AudioPlayer() {
           progressColor: "#ffffff",
           barWidth: 2,
           barGap: 1,
-          height: 70,
+          height: 34,
           cursorWidth: 0,
           responsive: true,
+          backend: "MediaElement",
         });
 
         wavesurfer.current.load(currentTrack.audio);
@@ -210,35 +211,55 @@ export default function AudioPlayer() {
   if (!currentTrack) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-black text-white p-4 z-50">
+    <div
+      className="fixed bottom-0 left-0 right-0 bg-black text-white px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] z-50"
+    >
       <div className="max-w-7xl mx-auto">
-        <div ref={waveformRef} className="mb-4" />
+        <div ref={waveformRef} className="mb-2" />
 
-        <div className="flex justify-between text-xs text-gray-400 mb-2">
+        <div className="flex justify-between text-[11px] text-gray-400 mb-2">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
         </div>
 
-        <div className="flex items-center gap-1">
-          <Image src={currentTrack.cover} alt={`${currentTrack.title} cover`} width={56} height={56} className="w-14 h-14 object-cover" />
-
-          <div className="flex-1">
-            <h3 className="font-semibold text-sm md:text-base truncate">{currentTrack.title}</h3>
-            <p className="text-xs md:text-sm text-gray-400 truncate">{currentTrack.artist}</p>
+        <div className="mt-2 flex items-center gap-2">
+          <div className="basis-2/5 min-w-0 flex items-center gap-2">
+            <Image src={currentTrack.cover} alt={`${currentTrack.title} cover`} width={40} height={40} className="w-10 h-10 object-cover shrink-0" />
+            <div className="min-w-0">
+              <div className="marquee-wrap overflow-hidden whitespace-nowrap text-sm font-semibold leading-tight">
+                <div className="marquee-track">
+                  <span className="pr-8">{currentTrack.title}</span>
+                  <span className="pr-8" aria-hidden>{currentTrack.title}</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 truncate mt-0.5">{currentTrack.artist}</p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Heart className="w-5 h-5" />
+          <div className="basis-3/5 min-w-0 flex items-center justify-end gap-0.5">
             <button
               onClick={handlePrev}
               disabled={!hasPrev}
               className="text-gray-400 hover:text-white p-2 disabled:opacity-40 disabled:cursor-not-allowed"
               title={t.player.previous}
             >
-              <SkipBack className="w-5 h-5" />
+              <SkipBack className="w-4 h-4" />
             </button>
-            <button onClick={() => setIsPlaying(!isPlaying)} className="bg-white text-black p-3 rounded-full">
-              {isPlaying ? <Pause /> : <Play />}
+            <button
+              onClick={() => {
+                if (wavesurfer.current) {
+                  if (isPlaying) {
+                    wavesurfer.current.pause();
+                  } else {
+                    wavesurfer.current.play();
+                  }
+                } else {
+                  setIsPlaying(!isPlaying);
+                }
+              }}
+              className="bg-white text-black p-2 rounded-full"
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             </button>
             <button
               onClick={playNextTrack}
@@ -246,42 +267,56 @@ export default function AudioPlayer() {
               className="text-gray-400 hover:text-white p-2 disabled:opacity-40 disabled:cursor-not-allowed"
               title={t.player.next}
             >
-              <SkipForward className="w-5 h-5" />
+              <SkipForward className="w-4 h-4" />
             </button>
             <button
               onClick={toggleLoop}
-              className={`${isLooping ? 'text-orange-500' : 'text-gray-400 hover:text-white'}`}
+              className={`p-2 ${isLooping ? 'text-orange-500' : 'text-gray-400 hover:text-white'}`}
               title={t.player.loop}
             >
-              <Repeat className="w-5 h-5" />
+              <Repeat className="w-4 h-4" />
             </button>
             <button
               onClick={closePlayer}
               className="text-gray-400 hover:text-white p-2"
               title={t.player.close}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
+        </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <button className="text-gray-400 hover:text-white p-2" title={t.player.volume}>
-                <Volume2 className="w-5 h-5" />
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={handleVolumeChange}
-                className="w-20 h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer slider"
-              />
-            </div>
-          </div>
+        <div className="mt-2 flex items-center gap-2 w-full">
+          <button className="text-gray-400 hover:text-white p-1.5 shrink-0" title={t.player.volume}>
+            <Volume2 className="w-4 h-4" />
+          </button>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={volume}
+            onChange={handleVolumeChange}
+            className="w-full h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer slider"
+          />
         </div>
       </div>
+      <style jsx>{`
+        .marquee-track {
+          display: inline-flex;
+          min-width: 100%;
+          animation: marquee 10s linear infinite;
+        }
+
+        @keyframes marquee {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
     </div>
   );
 }
