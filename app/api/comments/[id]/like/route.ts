@@ -12,11 +12,46 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const { id } = await params;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      return NextResponse.json({ error: 'Invalid comment id' }, { status: 400 });
+    }
+
     const { data: incremented, error: incrementError } = await supabase
       .rpc('increment_comment_likes', { comment_id: id });
 
     if (incrementError) {
-      throw incrementError;
+      const message = incrementError.message || 'Failed to like comment';
+      const hint = incrementError.hint || null;
+      const code = incrementError.code || null;
+
+      console.error('Error liking comment (rpc):', {
+        code,
+        message,
+        hint,
+        details: incrementError.details,
+      });
+
+      if (code === 'PGRST202' || code === '42883') {
+        return NextResponse.json(
+          {
+            error: 'Like function is missing in database',
+            code,
+            message,
+            hint,
+          },
+          { status: 500 },
+        );
+      }
+
+      return NextResponse.json(
+        {
+          error: 'Failed to like comment',
+          code,
+          message,
+          hint,
+        },
+        { status: 500 },
+      );
     }
 
     const updatedComment = Array.isArray(incremented) ? incremented[0] : incremented;

@@ -314,7 +314,7 @@ export default function AudioPlayer() {
               width={40}
               height={40}
               sizes="40px"
-              className="w-10 h-10 object-cover shrink-0"
+              className="w-10 h-10 object-contain bg-neutral-950 shrink-0"
             />
             <div className="min-w-0">
               <div className="marquee-wrap overflow-hidden whitespace-nowrap text-sm font-semibold leading-tight">
