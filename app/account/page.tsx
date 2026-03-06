@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { loadAllReleases } from '../lib/releases';
 import type { Release } from '../types/release';
+import LoadingGlow from '../components/LoadingGlow';
 
 interface ProfileData {
   email: string;
@@ -51,7 +52,7 @@ function buildAvatarLabel(profile: ProfileData | null) {
 }
 
 export default function AccountPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [likedTrackIds, setLikedTrackIds] = useState<string[]>([]);
   const [releases, setReleases] = useState<Release[]>([]);
@@ -60,29 +61,35 @@ export default function AccountPage() {
   const [nickname, setNickname] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const loadingText = language === 'ru' ? 'загрузка...' : 'loading...';
 
   useEffect(() => {
     const load = async () => {
-      const [profileResponse, likesResponse, releaseData] = await Promise.all([
-        fetch('/api/me/profile'),
-        fetch('/api/me/liked-tracks'),
-        loadAllReleases(),
-      ]);
+      try {
+        const [profileResponse, likesResponse, releaseData] = await Promise.all([
+          fetch('/api/me/profile'),
+          fetch('/api/me/liked-tracks'),
+          loadAllReleases(),
+        ]);
 
-      if (profileResponse.ok) {
-        const profileData: ProfileData = await profileResponse.json();
-        setProfile(profileData);
-        setFirstName(profileData.firstName || '');
-        setLastName(profileData.lastName || '');
-        setNickname(profileData.nickname || '');
+        if (profileResponse.ok) {
+          const profileData: ProfileData = await profileResponse.json();
+          setProfile(profileData);
+          setFirstName(profileData.firstName || '');
+          setLastName(profileData.lastName || '');
+          setNickname(profileData.nickname || '');
+        }
+
+        if (likesResponse.ok) {
+          const likeData: LikedTracksData = await likesResponse.json();
+          setLikedTrackIds(likeData.likedTrackIds || []);
+        }
+
+        setReleases(releaseData);
+      } finally {
+        setLoading(false);
       }
-
-      if (likesResponse.ok) {
-        const likeData: LikedTracksData = await likesResponse.json();
-        setLikedTrackIds(likeData.likedTrackIds || []);
-      }
-
-      setReleases(releaseData);
     };
 
     load();
@@ -150,8 +157,17 @@ export default function AccountPage() {
     nickname,
   });
 
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <LoadingGlow text={loadingText} />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {saving ? <LoadingGlow overlay text={loadingText} /> : null}
       <h1 className="text-3xl font-bold">{t.account.title}</h1>
 
       <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 space-y-4">

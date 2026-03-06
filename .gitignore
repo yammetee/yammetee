@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local audio cache (source of truth is Supabase Storage)
+/public/tracks/audio/
+/public/tracks/covers/
+/public/tracks/incoming/
+/supabase_dump_*/

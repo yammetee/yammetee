@@ -1,24 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { createSupabaseServerClient } from '../../../lib/supabase/server';
-import type { Comment } from '../route';
-
-const commentsFilePath = path.join(process.cwd(), 'app/data/comments.json');
 const ADMIN_EMAIL = 'a.luganko@gmail.com';
-
-function readComments(): Comment[] {
-  try {
-    const fileContents = fs.readFileSync(commentsFilePath, 'utf8');
-    return JSON.parse(fileContents);
-  } catch {
-    return [];
-  }
-}
-
-function writeComments(comments: Comment[]) {
-  fs.writeFileSync(commentsFilePath, JSON.stringify(comments, null, 2));
-}
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -37,29 +19,53 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: 'Content and isAnonymous are required' }, { status: 400 });
     }
 
-    const comments = readComments();
-    const commentIndex = comments.findIndex((c) => c.id === id);
-    if (commentIndex === -1) {
+    const { data: comment, error: commentError } = await supabase
+      .from('comments')
+      .select('id, user_id, author')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (commentError) {
+      throw commentError;
+    }
+
+    if (!comment) {
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
     const isAdmin = (user.email || '').toLowerCase() === ADMIN_EMAIL;
-    if (comments[commentIndex].userId !== user.id && !isAdmin) {
+    if (comment.user_id !== user.id && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const safeAuthor = typeof author === 'string' ? author.trim() : comments[commentIndex].author;
+    const safeAuthor = typeof author === 'string' ? author.trim() : comment.author;
+    const resolvedAuthor = isAnonymous ? 'Anonymous' : (safeAuthor || comment.author);
 
-    comments[commentIndex] = {
-      ...comments[commentIndex],
-      author: isAnonymous ? 'Anonymous' : (safeAuthor || comments[commentIndex].author),
-      content,
-      isAnonymous,
-    };
+    const { data: updatedComment, error: updateError } = await supabase
+      .from('comments')
+      .update({
+        author: resolvedAuthor,
+        content,
+        is_anonymous: isAnonymous,
+      })
+      .eq('id', id)
+      .select('id, author, content, is_anonymous, user_id, likes, created_at')
+      .single();
 
-    writeComments(comments);
+    if (updateError) {
+      throw updateError;
+    }
 
-    return NextResponse.json(comments[commentIndex]);
+    return NextResponse.json({
+      id: updatedComment.id,
+      author: updatedComment.author,
+      content: updatedComment.content,
+      createdAt: updatedComment.created_at,
+      isAnonymous: updatedComment.is_anonymous,
+      userId: updatedComment.user_id,
+      avatar: undefined,
+      likes: updatedComment.likes || 0,
+    });
   } catch (error) {
     console.error('Error updating comment:', error);
     return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 });
@@ -78,19 +84,33 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const { id } = await params;
-    const comments = readComments();
-    const commentIndex = comments.findIndex((c) => c.id === id);
-    if (commentIndex === -1) {
+    const { data: comment, error: commentError } = await supabase
+      .from('comments')
+      .select('id, user_id')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (commentError) {
+      throw commentError;
+    }
+
+    if (!comment) {
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
     const isAdmin = (user.email || '').toLowerCase() === ADMIN_EMAIL;
-    if (comments[commentIndex].userId !== user.id && !isAdmin) {
+    if (comment.user_id !== user.id && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    comments.splice(commentIndex, 1);
-    writeComments(comments);
+    const { error: deleteError } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {

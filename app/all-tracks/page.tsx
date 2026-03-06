@@ -6,7 +6,9 @@ import { useAudio } from '../contexts/AudioContext';
 import { loadAllReleases } from '../lib/releases';
 import type { Release } from '../types/release';
 import { createSupabaseBrowserClient } from '../lib/supabase/client';
-import { Heart } from 'lucide-react';
+import { Heart, Pause, Play } from 'lucide-react';
+import LoadingGlow from '../components/LoadingGlow';
+import { preloadAudio } from '../lib/audio-preload';
 
 interface FlatTrack {
   id: string;
@@ -19,12 +21,14 @@ interface FlatTrack {
 }
 
 export default function AllTracksPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { currentTrack, isPlaying, setQueueAndPlay, setIsPlaying } = useAudio();
   const [releases, setReleases] = useState<Release[]>([]);
   const [likedTrackIds, setLikedTrackIds] = useState<string[]>([]);
+  const [likingTrackId, setLikingTrackId] = useState<string | null>(null);
   const [isAuthed, setIsAuthed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const loadingText = language === 'ru' ? 'загрузка...' : 'loading...';
 
   useEffect(() => {
     const load = async () => {
@@ -97,34 +101,40 @@ export default function AllTracksPage() {
   };
 
   const toggleLike = async (trackId: string) => {
-    const response = await fetch('/api/me/liked-tracks', {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ trackId }),
-    });
+    setLikingTrackId(trackId);
+    try {
+      const response = await fetch('/api/me/liked-tracks', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ trackId }),
+      });
 
-    if (response.status === 401) {
-      window.location.href = '/login?next=/all-tracks';
-      return;
+      if (response.status === 401) {
+        window.location.href = '/login?next=/all-tracks';
+        return;
+      }
+
+      if (!response.ok) return;
+      const data = await response.json();
+      setLikedTrackIds(data.likedTrackIds || []);
+    } finally {
+      setLikingTrackId(null);
     }
-
-    if (!response.ok) return;
-    const data = await response.json();
-    setLikedTrackIds(data.likedTrackIds || []);
   };
 
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">{t.allTracks.loading}</div>
+        <LoadingGlow text={loadingText} />
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {likingTrackId ? <LoadingGlow overlay text={loadingText} /> : null}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">{t.allTracks.title}</h1>
       </div>
@@ -134,10 +144,28 @@ export default function AllTracksPage() {
           {tracks.map((track, index) => {
             const active = currentTrack?.audio === track.audio && isPlaying;
             return (
-              <div key={`${track.audio}-${index}`} className="px-4 py-3 hover:bg-neutral-800 transition-colors flex items-center justify-between gap-3">
-                <button onClick={() => playTrack(index)} className="flex-1 min-w-0 text-left">
-                  <p className="font-medium truncate">{track.title}</p>
-                  <p className="text-xs text-gray-400 truncate">{track.artist} · {t.allTracks.release}: {track.releaseTitle}</p>
+              <div key={`${track.audio}-${index}`} className="px-4 py-3 hover:bg-neutral-800 transition-colors flex items-center justify-between gap-3 cursor-pointer">
+                <button
+                  onClick={() => playTrack(index)}
+                  onMouseEnter={() => preloadAudio(track.audio)}
+                  className="flex-1 min-w-0 text-left cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="text-gray-400 shrink-0 inline-flex items-center justify-center w-4 h-4"
+                      aria-label={active ? t.allTracks.playing : t.tracks.play}
+                    >
+                      {active ? (
+                        <Pause className="w-4 h-4 block" />
+                      ) : (
+                        <Play className="w-4 h-4 block" />
+                      )}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{track.title}</p>
+                      <p className="text-xs text-gray-400 truncate">{track.artist} · {t.allTracks.release}: {track.releaseTitle}</p>
+                    </div>
+                  </div>
                 </button>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
@@ -146,8 +174,8 @@ export default function AllTracksPage() {
                       e.stopPropagation();
                       toggleLike(track.audio);
                     }}
-                    disabled={!isAuthed}
-                    className="p-1.5 rounded-md border border-neutral-600 hover:border-white disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled={!isAuthed || likingTrackId === track.audio}
+                    className="p-1.5 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
                     title={likedTrackIds.includes(track.audio) ? t.allTracks.unlike : t.allTracks.like}
                   >
                     <Heart
@@ -155,7 +183,6 @@ export default function AllTracksPage() {
                       className={likedTrackIds.includes(track.audio) ? 'text-red-500 fill-red-500' : 'text-gray-300'}
                     />
                   </button>
-                  {active ? <div className="text-xs text-gray-400 whitespace-nowrap">{t.allTracks.playing}</div> : null}
                 </div>
               </div>
             );

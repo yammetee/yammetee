@@ -1,34 +1,8 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { createSupabaseServerClient } from '../../../lib/supabase/server';
-import type { Comment } from '../../comments/route';
 import { NextRequest } from 'next/server';
 
-const commentsFilePath = path.join(process.cwd(), 'app/data/comments.json');
-const profilesFilePath = path.join(process.cwd(), 'app/data/profiles.json');
 const ADMIN_EMAIL = 'a.luganko@gmail.com';
-
-interface UserProfile {
-  firstName?: string;
-  lastName?: string;
-  nickname?: string;
-}
-
-type UserProfilesMap = Record<string, UserProfile>;
-
-function readProfiles(): UserProfilesMap {
-  try {
-    const fileContents = fs.readFileSync(profilesFilePath, 'utf8');
-    return JSON.parse(fileContents);
-  } catch {
-    return {};
-  }
-}
-
-function writeProfiles(data: UserProfilesMap) {
-  fs.writeFileSync(profilesFilePath, JSON.stringify(data, null, 2));
-}
 
 export async function GET() {
   try {
@@ -41,18 +15,29 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let userCommentId: string | null = null;
-    try {
-      const fileContents = fs.readFileSync(commentsFilePath, 'utf8');
-      const comments: Comment[] = JSON.parse(fileContents);
-      const userComment = comments.find((comment) => comment.userId === user.id);
-      userCommentId = userComment?.id ?? null;
-    } catch {
-      userCommentId = null;
+    const [profileResult, commentResult] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('first_name, last_name, nickname')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      supabase
+        .from('comments')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    if (profileResult.error) {
+      throw profileResult.error;
+    }
+    if (commentResult.error) {
+      throw commentResult.error;
     }
 
-    const profiles = readProfiles();
-    const userProfile = profiles[user.id] || {};
+    const userProfile = profileResult.data;
+    const userCommentId = commentResult.data?.id ?? null;
 
     return NextResponse.json({
       userId: user.id,
@@ -60,9 +45,9 @@ export async function GET() {
       isAdmin: (user.email || '').toLowerCase() === ADMIN_EMAIL,
       createdAt: user.created_at,
       userCommentId,
-      firstName: userProfile.firstName || '',
-      lastName: userProfile.lastName || '',
-      nickname: userProfile.nickname || '',
+      firstName: userProfile?.first_name || '',
+      lastName: userProfile?.last_name || '',
+      nickname: userProfile?.nickname || '',
     });
   } catch (error) {
     console.error('Profile fetch error:', error);
@@ -86,11 +71,29 @@ export async function PATCH(request: NextRequest) {
     const lastName = typeof body.lastName === 'string' ? body.lastName.trim() : '';
     const nickname = typeof body.nickname === 'string' ? body.nickname.trim() : '';
 
-    const profiles = readProfiles();
-    profiles[user.id] = { firstName, lastName, nickname };
-    writeProfiles(profiles);
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .upsert(
+        {
+          user_id: user.id,
+          first_name: firstName,
+          last_name: lastName,
+          nickname,
+        },
+        { onConflict: 'user_id' },
+      )
+      .select('first_name, last_name, nickname')
+      .single();
 
-    return NextResponse.json(profiles[user.id]);
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json({
+      firstName: data.first_name || '',
+      lastName: data.last_name || '',
+      nickname: data.nickname || '',
+    });
   } catch (error) {
     console.error('Profile update error:', error);
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });

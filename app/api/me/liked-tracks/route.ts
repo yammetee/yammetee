@@ -1,71 +1,102 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { createSupabaseServerClient } from '../../../lib/supabase/server';
 
-const likesFilePath = path.join(process.cwd(), 'app/data/liked_tracks.json');
-
-type LikesMap = Record<string, string[]>;
-
-function readLikes(): LikesMap {
-  try {
-    const content = fs.readFileSync(likesFilePath, 'utf8');
-    return JSON.parse(content);
-  } catch {
-    return {};
-  }
-}
-
-function writeLikes(data: LikesMap) {
-  fs.writeFileSync(likesFilePath, JSON.stringify(data, null, 2));
-}
-
 export async function GET() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data, error } = await supabase
+      .from('user_liked_tracks')
+      .select('track_id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json({
+      likedTrackIds: (data || []).map((row) => row.track_id),
+    });
+  } catch (error) {
+    console.error('Failed to load liked tracks:', error);
+    return NextResponse.json({ error: 'Failed to load liked tracks' }, { status: 500 });
   }
-
-  const likes = readLikes();
-  return NextResponse.json({ likedTrackIds: likes[user.id] || [] });
 }
 
 export async function PATCH(request: NextRequest) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { trackId } = await request.json();
+    if (!trackId || typeof trackId !== 'string') {
+      return NextResponse.json({ error: 'trackId is required' }, { status: 400 });
+    }
+
+    const { data: existingLike, error: findError } = await supabase
+      .from('user_liked_tracks')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .eq('track_id', trackId)
+      .maybeSingle();
+
+    if (findError) {
+      throw findError;
+    }
+
+    let liked = false;
+    if (existingLike) {
+      const { error: deleteError } = await supabase
+        .from('user_liked_tracks')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('track_id', trackId);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+    } else {
+      const { error: insertError } = await supabase
+        .from('user_liked_tracks')
+        .insert({ user_id: user.id, track_id: trackId });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      liked = true;
+    }
+
+    const { data: updatedLikes, error: updatedError } = await supabase
+      .from('user_liked_tracks')
+      .select('track_id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (updatedError) {
+      throw updatedError;
+    }
+
+    return NextResponse.json({
+      liked,
+      likedTrackIds: (updatedLikes || []).map((row) => row.track_id),
+    });
+  } catch (error) {
+    console.error('Failed to update liked tracks:', error);
+    return NextResponse.json({ error: 'Failed to update liked tracks' }, { status: 500 });
   }
-
-  const { trackId } = await request.json();
-  if (!trackId || typeof trackId !== 'string') {
-    return NextResponse.json({ error: 'trackId is required' }, { status: 400 });
-  }
-
-  const likes = readLikes();
-  const userLikes = new Set(likes[user.id] || []);
-
-  let liked: boolean;
-  if (userLikes.has(trackId)) {
-    userLikes.delete(trackId);
-    liked = false;
-  } else {
-    userLikes.add(trackId);
-    liked = true;
-  }
-
-  likes[user.id] = Array.from(userLikes);
-  writeLikes(likes);
-
-  return NextResponse.json({
-    liked,
-    likedTrackIds: likes[user.id],
-  });
 }

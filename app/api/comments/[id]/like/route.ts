@@ -1,21 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { createSupabaseServerClient } from '../../../../lib/supabase/server';
 
-const commentsFilePath = path.join(process.cwd(), 'app/data/comments.json');
-
-export interface Comment {
-  id: string;
-  author: string;
-  content: string;
-  createdAt: string;
-  isAnonymous: boolean;
-  avatar?: string;
-  likes: number;
-}
-
-// PATCH /api/comments/[id]/like - лайк комментария
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = await createSupabaseServerClient();
@@ -27,18 +12,29 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const { id } = await params;
-    const fileContents = fs.readFileSync(commentsFilePath, 'utf8');
-    const comments: Comment[] = JSON.parse(fileContents);
+    const { data: incremented, error: incrementError } = await supabase
+      .rpc('increment_comment_likes', { comment_id: id });
 
-    const commentIndex = comments.findIndex(c => c.id === id);
-    if (commentIndex === -1) {
+    if (incrementError) {
+      throw incrementError;
+    }
+
+    const updatedComment = Array.isArray(incremented) ? incremented[0] : incremented;
+
+    if (!updatedComment) {
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    comments[commentIndex].likes += 1;
-    fs.writeFileSync(commentsFilePath, JSON.stringify(comments, null, 2));
-
-    return NextResponse.json(comments[commentIndex]);
+    return NextResponse.json({
+      id: updatedComment.id,
+      author: updatedComment.author,
+      content: updatedComment.content,
+      createdAt: updatedComment.created_at,
+      isAnonymous: updatedComment.is_anonymous,
+      userId: updatedComment.user_id,
+      avatar: undefined,
+      likes: updatedComment.likes || 0,
+    });
   } catch (error) {
     console.error('Error liking comment:', error);
     return NextResponse.json({ error: 'Failed to like comment' }, { status: 500 });

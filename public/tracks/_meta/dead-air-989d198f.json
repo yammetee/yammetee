@@ -4,13 +4,13 @@
   "artist": "Yamme Tee",
   "releaseType": "Single",
   "releaseDate": "2026-01-12",
-  "cover": "/tracks/dead_air/IMG_3310 (1).jpg",
+  "cover": "/tracks/covers/dead-air-989d198f.jpg",
   "tracks": [
     {
       "id": "yamme-tee-dead-air-2d4e2052",
       "title": "Yamme Tee - Dead Air",
       "artist": "Yamme Tee",
-      "audio": "/tracks/dead_air/Yamme Tee - Dead Air.mp3",
+      "audio": "/tracks/audio/dead-air-989d198f/yamme-tee-dead-air-2d4e2052.mp3",
       "lyrics": ""
     }
   ]

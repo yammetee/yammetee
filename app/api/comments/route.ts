@@ -1,26 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { createSupabaseServerClient } from '../../lib/supabase/server';
-
-const commentsFilePath = path.join(process.cwd(), 'app/data/comments.json');
-const profilesFilePath = path.join(process.cwd(), 'app/data/profiles.json');
 
 interface UserProfile {
   firstName?: string;
   lastName?: string;
   nickname?: string;
-}
-
-type UserProfilesMap = Record<string, UserProfile>;
-
-function readProfiles(): UserProfilesMap {
-  try {
-    const fileContents = fs.readFileSync(profilesFilePath, 'utf8');
-    return JSON.parse(fileContents);
-  } catch {
-    return {};
-  }
 }
 
 function buildDisplayName(user: { email?: string | null }, profile?: UserProfile) {
@@ -46,19 +30,48 @@ export interface Comment {
   likes: number;
 }
 
-// GET /api/comments - получить все комментарии
+interface DbCommentRow {
+  id: string;
+  author: string;
+  content: string;
+  is_anonymous: boolean;
+  user_id: string;
+  likes: number;
+  created_at: string;
+}
+
+function mapDbComment(row: DbCommentRow): Comment {
+  return {
+    id: row.id,
+    author: row.author,
+    content: row.content,
+    createdAt: row.created_at,
+    isAnonymous: row.is_anonymous,
+    userId: row.user_id,
+    avatar: undefined,
+    likes: row.likes || 0,
+  };
+}
+
 export async function GET() {
   try {
-    const fileContents = fs.readFileSync(commentsFilePath, 'utf8');
-    const comments: Comment[] = JSON.parse(fileContents);
-    return NextResponse.json(comments);
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('comments')
+      .select('id, author, content, is_anonymous, user_id, likes, created_at')
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json((data || []).map((row) => mapDbComment(row as DbCommentRow)));
   } catch (error) {
     console.error('Error reading comments:', error);
     return NextResponse.json({ error: 'Failed to load comments' }, { status: 500 });
   }
 }
 
-// POST /api/comments - добавить комментарий
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
@@ -74,35 +87,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Content and isAnonymous are required' }, { status: 400 });
     }
 
-    const fileContents = fs.readFileSync(commentsFilePath, 'utf8');
-    const comments: Comment[] = JSON.parse(fileContents);
-
-    const existingComment = comments.find((c) => c.userId === user.id);
+    const { data: existingComment, error: existingError } = await supabase
+      .from('comments')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (existingError) {
+      throw existingError;
+    }
     if (existingComment) {
       return NextResponse.json({ error: 'You can only leave one comment' }, { status: 409 });
     }
 
-    const profiles = readProfiles();
-    const profile = profiles[user.id];
+    const { data: profileRow, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('first_name, last_name, nickname')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (profileError) {
+      throw profileError;
+    }
+
+    const profile: UserProfile | undefined = profileRow
+      ? {
+          firstName: profileRow.first_name,
+          lastName: profileRow.last_name,
+          nickname: profileRow.nickname,
+        }
+      : undefined;
+
     const fallbackDisplayName = buildDisplayName(user, profile);
     const customAuthor = typeof author === 'string' ? author.trim() : '';
     const displayName = customAuthor || fallbackDisplayName;
 
-    const newComment: Comment = {
-      id: Date.now().toString(),
-      author: isAnonymous ? 'Anonymous' : displayName,
-      content,
-      createdAt: new Date().toISOString(),
-      isAnonymous,
-      userId: user.id,
-      avatar: undefined,
-      likes: 0,
-    };
+    const { data: insertedComment, error: insertError } = await supabase
+      .from('comments')
+      .insert({
+        user_id: user.id,
+        author: isAnonymous ? 'Anonymous' : displayName,
+        content,
+        is_anonymous: isAnonymous,
+      })
+      .select('id, author, content, is_anonymous, user_id, likes, created_at')
+      .single();
 
-    comments.push(newComment);
-    fs.writeFileSync(commentsFilePath, JSON.stringify(comments, null, 2));
+    if (insertError) {
+      throw insertError;
+    }
 
-    return NextResponse.json(newComment, { status: 201 });
+    return NextResponse.json(mapDbComment(insertedComment as DbCommentRow), { status: 201 });
   } catch (error) {
     console.error('Error adding comment:', error);
     return NextResponse.json({ error: 'Failed to add comment' }, { status: 500 });

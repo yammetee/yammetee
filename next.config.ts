@@ -1,5 +1,13 @@
 import type { NextConfig } from "next";
 
+let supabaseHostname: string | null = null;
+try {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  supabaseHostname = raw ? new URL(raw).hostname : null;
+} catch {
+  supabaseHostname = null;
+}
+
 const nextConfig: NextConfig = {
   turbopack: {},
   images: {
@@ -8,6 +16,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "api.dicebear.com",
       },
+      ...(supabaseHostname
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: supabaseHostname,
+            },
+          ]
+        : []),
     ],
   },
   webpack: (config) => {

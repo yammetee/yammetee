@@ -24,3 +24,45 @@ body {
   color: var(--foreground);
   font-family: "Segoe UI", "Noto Sans", "DejaVu Sans", "Helvetica Neue", Arial, sans-serif;
 }
+
+.loading-glow-text {
+  font-size: clamp(1.05rem, 2vw, 1.5rem);
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: #e5e5e5;
+  text-transform: none;
+  animation: loadingGlowPulse 2.2s ease-in-out infinite;
+}
+
+.loading-glow-text--compact {
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+}
+
+.loading-glow-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 10, 0.28);
+  backdrop-filter: blur(1px);
+  z-index: 70;
+}
+
+@keyframes loadingGlowPulse {
+  0% {
+    opacity: 0.45;
+    text-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  50% {
+    opacity: 1;
+    text-shadow:
+      0 0 8px rgba(255, 255, 255, 0.55),
+      0 0 22px rgba(255, 255, 255, 0.35);
+  }
+  100% {
+    opacity: 0.45;
+    text-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+}

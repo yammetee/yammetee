@@ -4,62 +4,62 @@
   "artist": "Yamme Tee",
   "releaseType": "EP",
   "releaseDate": "2023-12-04",
-  "cover": "/tracks/Yamme Tee -  EP/IMG_7076.JPG",
+  "cover": "/tracks/covers/yamme-tee-ep-febebfbc.jpg",
   "tracks": [
     {
       "id": "1-11-yamme-tee-11-a4704374",
       "title": "Yamme Tee - 11 секунд",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Yamme Tee -  EP/1. 11 секунд/Yamme Tee - 11 секунд.mp3",
+      "audio": "/tracks/audio/yamme-tee-ep-febebfbc/1-11-yamme-tee-11-a4704374.mp3",
       "lyrics": ""
     },
     {
       "id": "2-yamme-tee-b38a85c8",
       "title": "Yamme Tee - куда идти",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Yamme Tee -  EP/2. Куда идти/Yamme Tee - куда идти.mp3",
+      "audio": "/tracks/audio/yamme-tee-ep-febebfbc/2-yamme-tee-b38a85c8.mp3",
       "lyrics": ""
     },
     {
       "id": "3-yamme-tee-09172de0",
       "title": "Yamme Tee - Улей",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Yamme Tee -  EP/3. Улей/Yamme Tee - Улей.mp3",
+      "audio": "/tracks/audio/yamme-tee-ep-febebfbc/3-yamme-tee-09172de0.mp3",
       "lyrics": ""
     },
     {
       "id": "4-yamme-tee-5d2be8de",
       "title": "Yamme Tee - причал",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Yamme Tee -  EP/4. Причал/Yamme Tee - причал.mp3",
+      "audio": "/tracks/audio/yamme-tee-ep-febebfbc/4-yamme-tee-5d2be8de.mp3",
       "lyrics": ""
     },
     {
       "id": "5-2-yamme-tee-o2-d75344f1",
       "title": "Yamme Tee - o2",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Yamme Tee -  EP/5. о2/Yamme Tee - o2.mp3",
+      "audio": "/tracks/audio/yamme-tee-ep-febebfbc/5-2-yamme-tee-o2-d75344f1.mp3",
       "lyrics": ""
     },
     {
       "id": "6-yamme-tee-2c7bd511",
       "title": "Yamme Tee - район",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Yamme Tee -  EP/6. Район/Yamme Tee - район.mp3",
+      "audio": "/tracks/audio/yamme-tee-ep-febebfbc/6-yamme-tee-2c7bd511.mp3",
       "lyrics": ""
     },
     {
       "id": "7-who-s-nim-yamme-tee-who-s-nim-01315a29",
       "title": "Yamme Tee - Who's Nim?",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Yamme Tee -  EP/7. Who's Nim?/Yamme Tee - Who's Nim?.mp3",
+      "audio": "/tracks/audio/yamme-tee-ep-febebfbc/7-who-s-nim-yamme-tee-who-s-nim-01315a29.mp3",
       "lyrics": ""
     },
     {
       "id": "9-yamme-tee-6d5b4f1c",
       "title": "Yamme Tee - День за днем",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Yamme Tee -  EP/9. День за днем/Yamme Tee - День за днем.mp3",
+      "audio": "/tracks/audio/yamme-tee-ep-febebfbc/9-yamme-tee-6d5b4f1c.mp3",
       "lyrics": ""
     }
   ]

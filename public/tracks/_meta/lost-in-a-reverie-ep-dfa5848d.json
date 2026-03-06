@@ -4,62 +4,62 @@
   "artist": "Yamme Tee",
   "releaseType": "EP",
   "releaseDate": "2026-02-02",
-  "cover": "/tracks/Lost in a Reverie - EP/IMG_1756.jpg",
+  "cover": "/tracks/covers/lost-in-a-reverie-ep-dfa5848d.jpg",
   "tracks": [
     {
       "id": "1-hala-yamme-tee-hala-d1f33a5a",
       "title": "Yamme Tee - Hala",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Lost in a Reverie - EP/1 Hala/Yamme Tee - Hala.mp3",
+      "audio": "/tracks/audio/lost-in-a-reverie-ep-dfa5848d/1-hala-yamme-tee-hala-d1f33a5a.mp3",
       "lyrics": ""
     },
     {
       "id": "2-lost-in-a-reverie-yamme-tee-lost-in-a-reverie-14e2ffc4",
       "title": "Yamme Tee - Lost In a Reverie",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Lost in a Reverie - EP/2 lost in a reverie/Yamme Tee - Lost In a Reverie.mp3",
+      "audio": "/tracks/audio/lost-in-a-reverie-ep-dfa5848d/2-lost-in-a-reverie-yamme-tee-lost-in-a-reverie-14e2ffc4.mp3",
       "lyrics": ""
     },
     {
       "id": "3-yamme-tee-e7160062",
       "title": "Yamme Tee - Эй",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Lost in a Reverie - EP/3 Эй/Yamme Tee - Эй.mp3",
+      "audio": "/tracks/audio/lost-in-a-reverie-ep-dfa5848d/3-yamme-tee-e7160062.mp3",
       "lyrics": ""
     },
     {
       "id": "4-11-yamme-tee-11-4f2abcfd",
       "title": "Yamme Tee - 11",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Lost in a Reverie - EP/4 11/Yamme Tee - 11.mp3",
+      "audio": "/tracks/audio/lost-in-a-reverie-ep-dfa5848d/4-11-yamme-tee-11-4f2abcfd.mp3",
       "lyrics": ""
     },
     {
       "id": "5-nocturne-yamme-tee-pyg-nocturne-bc1d4397",
       "title": "Yamme Tee & PYG - nocturne",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Lost in a Reverie - EP/5 Nocturne/Yamme Tee & PYG - nocturne.mp3",
+      "audio": "/tracks/audio/lost-in-a-reverie-ep-dfa5848d/5-nocturne-yamme-tee-pyg-nocturne-bc1d4397.mp3",
       "lyrics": ""
     },
     {
       "id": "6-yamme-tee-dbc14573",
       "title": "Yamme Tee - Причал",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Lost in a Reverie - EP/6 Причал/Yamme Tee - Причал.mp3",
+      "audio": "/tracks/audio/lost-in-a-reverie-ep-dfa5848d/6-yamme-tee-dbc14573.mp3",
       "lyrics": ""
     },
     {
       "id": "7-yamme-tee-0d81a392",
       "title": "Yamme Tee - странный",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Lost in a Reverie - EP/7 странный/Yamme Tee - странный.mp3",
+      "audio": "/tracks/audio/lost-in-a-reverie-ep-dfa5848d/7-yamme-tee-0d81a392.mp3",
       "lyrics": ""
     },
     {
       "id": "8-bares-yamme-tee-bares-1be82f79",
       "title": "Yamme Tee - Bares",
       "artist": "Yamme Tee",
-      "audio": "/tracks/Lost in a Reverie - EP/8 Bares/Yamme Tee - Bares.mp3",
+      "audio": "/tracks/audio/lost-in-a-reverie-ep-dfa5848d/8-bares-yamme-tee-bares-1be82f79.mp3",
       "lyrics": ""
     }
   ]

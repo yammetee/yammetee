@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "releases:generate": "node scripts/generate-releases.mjs"
+    "release:add": "node scripts/add-release-from-folder.mjs",
+    "release:append": "node scripts/add-release-from-folder.mjs --append",
+    "tracks:upload:supabase": "node scripts/upload-tracks-to-supabase-storage.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",

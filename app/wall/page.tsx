@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Heart } from 'lucide-react';
+import LoadingGlow from '../components/LoadingGlow';
 
 interface Comment {
   id: string;
@@ -56,7 +57,7 @@ function getDefaultAuthorName(profile: ProfileData | null) {
 }
 
 export default function Wall() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [comments, setComments] = useState<Comment[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [author, setAuthor] = useState('');
@@ -65,10 +66,16 @@ export default function Wall() {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [likingCommentId, setLikingCommentId] = useState<string | null>(null);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+  const [confirmDeleteCommentId, setConfirmDeleteCommentId] = useState<string | null>(null);
   const [userCommentId, setUserCommentId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const loadingText = language === 'ru' ? 'загрузка...' : 'loading...';
+  const overlayLoading = loading || Boolean(likingCommentId) || Boolean(deletingCommentId);
 
   useEffect(() => {
     const loadData = async () => {
@@ -94,6 +101,8 @@ export default function Wall() {
         }
       } catch (error) {
         console.error('Error loading wall data:', error);
+      } finally {
+        setInitialLoading(false);
       }
     };
 
@@ -101,6 +110,7 @@ export default function Wall() {
   }, []);
 
   const handleLike = async (id: string) => {
+    setLikingCommentId(id);
     try {
       const response = await fetch(`/api/comments/${id}/like`, {
         method: 'PATCH',
@@ -111,6 +121,8 @@ export default function Wall() {
       }
     } catch (error) {
       console.error('Error liking comment:', error);
+    } finally {
+      setLikingCommentId(null);
     }
   };
 
@@ -130,12 +142,9 @@ export default function Wall() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm(t.wall.confirmDelete)) {
-      return;
-    }
-
+  const executeDelete = async (id: string) => {
     try {
+      setDeletingCommentId(id);
       const response = await fetch(`/api/comments/${id}`, { method: 'DELETE' });
       if (!response.ok) {
         setMessage(t.wall.error);
@@ -152,7 +161,24 @@ export default function Wall() {
     } catch (error) {
       console.error('Error deleting comment:', error);
       setMessage(t.wall.error);
+    } finally {
+      setDeletingCommentId(null);
     }
+  };
+
+  const requestDelete = (id: string) => {
+    setConfirmDeleteCommentId(id);
+  };
+
+  const cancelDelete = () => {
+    setConfirmDeleteCommentId(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteCommentId) return;
+    const targetId = confirmDeleteCommentId;
+    setConfirmDeleteCommentId(null);
+    await executeDelete(targetId);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -213,8 +239,17 @@ export default function Wall() {
     setTimeout(() => setMessage(''), 3000);
   };
 
+  if (initialLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <LoadingGlow text={loadingText} />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {overlayLoading ? <LoadingGlow overlay text={loadingText} /> : null}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">{t.wall.title}</h1>
       </div>
@@ -261,10 +296,13 @@ export default function Wall() {
                   <div className="mt-4 flex items-center space-x-4">
                     <button
                       onClick={() => handleLike(comment.id)}
-                      className="flex items-center space-x-1 text-gray-400 hover:text-red-400 cursor-pointer"
+                      disabled={likingCommentId === comment.id}
+                      className="flex items-center space-x-1 text-gray-400 hover:text-red-400 cursor-pointer disabled:opacity-60"
                     >
-                      <Heart size={16} className="fill-current" />
-                      <span>{comment.likes}</span>
+                      <>
+                        <Heart size={16} className="fill-current" />
+                        <span>{comment.likes}</span>
+                      </>
                     </button>
                     {canManageComment ? (
                       <>
@@ -275,8 +313,9 @@ export default function Wall() {
                           {t.wall.edit}
                         </button>
                         <button
-                          onClick={() => handleDelete(comment.id)}
-                          className="text-sm text-red-300 hover:text-red-200"
+                          onClick={() => requestDelete(comment.id)}
+                          disabled={deletingCommentId === comment.id}
+                          className="text-sm text-red-300 hover:text-red-200 disabled:opacity-60"
                         >
                           {t.wall.delete}
                         </button>
@@ -357,10 +396,35 @@ export default function Wall() {
                   disabled={loading}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-md font-medium"
                 >
-                  {loading ? t.wall.submitting : editingCommentId ? t.wall.save : t.wall.submit}
+                  {editingCommentId ? t.wall.save : t.wall.submit}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {confirmDeleteCommentId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-neutral-800 p-6 rounded-md w-full max-w-md">
+            <h2 className="text-xl font-bold mb-3">{t.wall.delete}</h2>
+            <p className="text-gray-300 mb-5">{t.wall.confirmDelete}</p>
+            <div className="flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={cancelDelete}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md"
+              >
+                {t.wall.cancel}
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md font-medium"
+              >
+                {t.wall.delete}
+              </button>
+            </div>
           </div>
         </div>
       )}

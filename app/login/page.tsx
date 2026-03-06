@@ -6,9 +6,10 @@ import { FormEvent, useState } from 'react';
 import { createSupabaseBrowserClient } from '../lib/supabase/client';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Eye, EyeOff } from 'lucide-react';
+import LoadingGlow from '../components/LoadingGlow';
 
 export default function LoginPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const [nextPath] = useState(() => {
     if (typeof window === 'undefined') return '/account';
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const loadingText = language === 'ru' ? 'загрузка...' : 'loading...';
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -45,6 +47,7 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-10">
+      {loading ? <LoadingGlow overlay text={loadingText} /> : null}
       <h1 className="text-3xl font-bold mb-6">{t.auth.loginTitle}</h1>
       <form onSubmit={onSubmit} className="space-y-4 bg-neutral-900 border border-neutral-800 rounded-xl p-5">
         <div>

@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from "react";
-import { Play, Pause, Repeat, Volume2, X, SkipBack, SkipForward } from "lucide-react";
+import { Play, Pause, Repeat, Shuffle, Volume2, X, SkipBack, SkipForward } from "lucide-react";
 import Image from "next/image";
 import { useAudio } from "../contexts/AudioContext";
 import { useLanguage } from "../contexts/LanguageContext";
+import { resolveAudioSource, resolveCoverSource } from "../lib/audio-source";
+import { preloadAudio } from "../lib/audio-preload";
 
 interface WaveSurferInstance {
   destroy: () => void;
@@ -18,6 +20,8 @@ interface WaveSurferInstance {
   setVolume: (value: number) => void;
 }
 
+type RepeatMode = "off" | "all" | "one";
+
 export default function AudioPlayer() {
   const { t } = useLanguage();
   const {
@@ -26,6 +30,7 @@ export default function AudioPlayer() {
     queue,
     currentIndex,
     setIsPlaying,
+    setQueueAndPlay,
     playNextTrack,
     playPrevTrack,
     clearPlayback,
@@ -34,9 +39,13 @@ export default function AudioPlayer() {
   const wavesurfer = useRef<WaveSurferInstance | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isLooping, setIsLooping] = useState(false);
+  const [isShuffleEnabled, setIsShuffleEnabled] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>("off");
   const [volume, setVolume] = useState(0.3);
-  const isLoopingRef = useRef(false);
+  const isShuffleEnabledRef = useRef(false);
+  const repeatModeRef = useRef<RepeatMode>("off");
+  const shuffleHistoryRef = useRef<number[]>([]);
+  const playRandomTrackRef = useRef<() => void>(() => {});
   const creatingTrackIdRef = useRef<string | null>(null);
   const volumeRef = useRef(0.3);
   const isPlayingRef = useRef(false);
@@ -59,6 +68,14 @@ export default function AudioPlayer() {
   }, [isPlaying]);
 
   useEffect(() => {
+    isShuffleEnabledRef.current = isShuffleEnabled;
+  }, [isShuffleEnabled]);
+
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
+
+  useEffect(() => {
     if (!currentTrack) {
       if (wavesurfer.current) {
         wavesurfer.current.destroy();
@@ -71,8 +88,32 @@ export default function AudioPlayer() {
       lastRenderedSecondRef.current = -1;
       setCurrentTime(0);
       setDuration(0);
+      shuffleHistoryRef.current = [];
     }
   }, [currentTrack]);
+
+  playRandomTrackRef.current = () => {
+    if (queue.length < 2) {
+      setIsPlaying(false);
+      return;
+    }
+
+    const current = currentIndex;
+    const candidates = queue
+      .map((_, idx) => idx)
+      .filter((idx) => idx !== current);
+
+    if (!candidates.length) {
+      setIsPlaying(false);
+      return;
+    }
+
+    const randomIdx = candidates[Math.floor(Math.random() * candidates.length)];
+    if (current >= 0) {
+      shuffleHistoryRef.current.push(current);
+    }
+    setQueueAndPlay(queue, randomIdx);
+  };
 
   useEffect(() => {
     if (currentTrack && waveformRef.current) {
@@ -111,7 +152,7 @@ export default function AudioPlayer() {
           backend: "MediaElement",
         });
 
-        wavesurfer.current.load(currentTrack.audio);
+        wavesurfer.current.load(resolveAudioSource(currentTrack.audio));
 
         wavesurfer.current.on("ready", () => {
           if (!mountedRef.current || !wavesurfer.current) return;
@@ -138,10 +179,14 @@ export default function AudioPlayer() {
         });
 
         wavesurfer.current.on('finish', () => {
-          if (isLoopingRef.current) {
+          if (repeatModeRef.current === "one") {
             if (!wavesurfer.current) return;
             wavesurfer.current.seekTo(0);
             wavesurfer.current.play();
+          } else if (isShuffleEnabledRef.current && queue.length > 1) {
+            playRandomTrackRef.current();
+          } else if (repeatModeRef.current === "all" && currentIndex >= queue.length - 1 && queue.length > 0) {
+            setQueueAndPlay(queue, 0);
           } else {
             playNextTrack();
           }
@@ -151,7 +196,7 @@ export default function AudioPlayer() {
         wavesurfer.current.setVolume(volumeRef.current);
       });
     }
-  }, [currentTrack, setIsPlaying, playNextTrack]);
+  }, [currentTrack, setIsPlaying, playNextTrack, queue, currentIndex, setQueueAndPlay]);
 
   useEffect(() => {
     if (wavesurfer.current) {
@@ -178,11 +223,13 @@ export default function AudioPlayer() {
     }
   }, [isPlaying]);
 
-  const toggleLoop = () => {
-    const newLooping = !isLooping;
-    setIsLooping(newLooping);
-    isLoopingRef.current = newLooping;
-  };
+  useEffect(() => {
+    if (currentIndex < 0 || currentIndex >= queue.length - 1) return;
+    if (isShuffleEnabled) return;
+    const nextTrack = queue[currentIndex + 1];
+    if (!nextTrack?.audio) return;
+    preloadAudio(nextTrack.audio);
+  }, [currentIndex, queue, isShuffleEnabled]);
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
@@ -193,11 +240,48 @@ export default function AudioPlayer() {
   };
 
   const formatTime = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex >= 0 && currentIndex < queue.length - 1;
+  const hasPrev = isShuffleEnabled
+    ? shuffleHistoryRef.current.length > 0
+    : currentIndex > 0 || (repeatMode === "all" && queue.length > 1);
+  const hasNext = isShuffleEnabled
+    ? queue.length > 1
+    : (currentIndex >= 0 && currentIndex < queue.length - 1) || (repeatMode === "all" && queue.length > 1);
+
+  const cycleRepeatMode = () => {
+    setRepeatMode((mode) => {
+      if (mode === "off") return "all";
+      if (mode === "all") return "one";
+      return "off";
+    });
+  };
+
+  const repeatTitle = repeatMode === "one" ? t.player.repeatOne : t.player.loop;
+
+  const handleNext = () => {
+    if (isShuffleEnabled) {
+      playRandomTrackRef.current();
+      return;
+    }
+    if (repeatMode === "all" && currentIndex >= queue.length - 1 && queue.length > 0) {
+      setQueueAndPlay(queue, 0);
+      return;
+    }
+    playNextTrack();
+  };
   const handlePrev = () => {
     if (wavesurfer.current && wavesurfer.current.getCurrentTime() > 3) {
       wavesurfer.current.seekTo(0);
+      return;
+    }
+    if (isShuffleEnabled) {
+      const previousIndex = shuffleHistoryRef.current.pop();
+      if (typeof previousIndex === "number" && previousIndex >= 0 && previousIndex < queue.length) {
+        setQueueAndPlay(queue, previousIndex);
+      }
+      return;
+    }
+    if (repeatMode === "all" && currentIndex === 0 && queue.length > 1) {
+      setQueueAndPlay(queue, queue.length - 1);
       return;
     }
     playPrevTrack();
@@ -224,7 +308,14 @@ export default function AudioPlayer() {
 
         <div className="mt-2 flex items-center gap-2">
           <div className="basis-2/5 min-w-0 flex items-center gap-2">
-            <Image src={currentTrack.cover} alt={`${currentTrack.title} cover`} width={40} height={40} className="w-10 h-10 object-cover shrink-0" />
+            <Image
+              src={resolveCoverSource(currentTrack.cover, { width: 80, quality: 65 })}
+              alt={`${currentTrack.title} cover`}
+              width={40}
+              height={40}
+              sizes="40px"
+              className="w-10 h-10 object-cover shrink-0"
+            />
             <div className="min-w-0">
               <div className="marquee-wrap overflow-hidden whitespace-nowrap text-sm font-semibold leading-tight">
                 <div className="marquee-track">
@@ -237,6 +328,22 @@ export default function AudioPlayer() {
           </div>
 
           <div className="basis-3/5 min-w-0 flex items-center justify-end gap-0.5">
+            <button
+              onClick={() => {
+                setIsShuffleEnabled((value) => {
+                  const nextValue = !value;
+                  if (!nextValue) {
+                    shuffleHistoryRef.current = [];
+                  }
+                  return nextValue;
+                });
+              }}
+              disabled={queue.length < 2}
+              className={`p-2 disabled:opacity-40 disabled:cursor-not-allowed ${isShuffleEnabled ? 'text-orange-500' : 'text-gray-400 hover:text-white'}`}
+              title={t.player.shuffle}
+            >
+              <Shuffle className="w-4 h-4" />
+            </button>
             <button
               onClick={handlePrev}
               disabled={!hasPrev}
@@ -262,7 +369,7 @@ export default function AudioPlayer() {
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             </button>
             <button
-              onClick={playNextTrack}
+              onClick={handleNext}
               disabled={!hasNext}
               className="text-gray-400 hover:text-white p-2 disabled:opacity-40 disabled:cursor-not-allowed"
               title={t.player.next}
@@ -270,11 +377,14 @@ export default function AudioPlayer() {
               <SkipForward className="w-4 h-4" />
             </button>
             <button
-              onClick={toggleLoop}
-              className={`p-2 ${isLooping ? 'text-orange-500' : 'text-gray-400 hover:text-white'}`}
-              title={t.player.loop}
+              onClick={cycleRepeatMode}
+              className={`relative p-2 ${repeatMode === 'off' ? 'text-gray-400 hover:text-white' : 'text-orange-500'}`}
+              title={repeatTitle}
             >
               <Repeat className="w-4 h-4" />
+              {repeatMode === "one" ? (
+                <span className="absolute -top-0.5 right-0 text-[12px] leading-none font-bold">1</span>
+              ) : null}
             </button>
             <button
               onClick={closePlayer}

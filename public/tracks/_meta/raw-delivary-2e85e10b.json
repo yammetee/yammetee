@@ -4,13 +4,13 @@
   "artist": "Yamme Tee",
   "releaseType": "Single",
   "releaseDate": "2026-02-02",
-  "cover": "/tracks/raw_delivary/cover.png",
+  "cover": "/tracks/covers/raw-delivary-2e85e10b.png",
   "tracks": [
     {
       "id": "yamme-tee-raw-delivery-ae2f86ef",
       "title": "Yamme Tee - raw delivery",
       "artist": "Yamme Tee",
-      "audio": "/tracks/raw_delivary/Yamme Tee - raw delivery.mp3",
+      "audio": "/tracks/audio/raw-delivary-2e85e10b/yamme-tee-raw-delivery-ae2f86ef.mp3",
       "lyrics": ""
     }
   ]
