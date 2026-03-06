@@ -92,7 +92,7 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-neutral-800 bg-black">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-[10px]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="order-1 sm:order-2 flex flex-wrap justify-center sm:justify-end gap-2">
             {socialLinks.map((item) => (

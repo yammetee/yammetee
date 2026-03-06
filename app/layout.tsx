@@ -76,6 +76,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+        className="flex min-h-screen flex-col"
         style={{
           margin: 0,
           padding: 0,
@@ -92,10 +93,12 @@ export default function RootLayout({
         <LanguageProvider>
           <AudioProvider>
             <Navigation />
-            <main style={{ paddingTop: "64px", paddingBottom: "96px" }}>
-              {children}
-            </main>
-            <Footer />
+            <div className="flex min-h-screen flex-1 flex-col">
+              <main className="flex-1 pt-16">
+                {children}
+              </main>
+              <Footer />
+            </div>
             <GlobalAudioPlayer />
           </AudioProvider>
         </LanguageProvider>
