@@ -4,6 +4,7 @@ import Navigation from "./components/Navigation";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AudioProvider } from "./contexts/AudioContext";
 import GlobalAudioPlayer from "./components/GlobalAudioPlayer";
+import Footer from "./components/Footer";
 import { ARTIST_KEYWORDS, ARTIST_NAME, getArtistJsonLd, getSiteUrl } from "./lib/seo";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -91,9 +92,10 @@ export default function RootLayout({
         <LanguageProvider>
           <AudioProvider>
             <Navigation />
-            <main style={{ paddingTop: "64px", paddingBottom: "192px" }}>
+            <main style={{ paddingTop: "64px", paddingBottom: "96px" }}>
               {children}
             </main>
+            <Footer />
             <GlobalAudioPlayer />
           </AudioProvider>
         </LanguageProvider>

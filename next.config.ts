@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "api.dicebear.com",
       },
+      {
+        protocol: "https",
+        hostname: "music.yandex.com",
+      },
+      {
+        protocol: "https",
+        hostname: "zvuk.com",
+      },
       ...(supabaseHostname
         ? [
             {

@@ -101,6 +101,9 @@ export const dictionaries = {
       cancel: 'Cancel',
       note: 'You can leave one message per account.',
     },
+    footer: {
+      copyright: 'Yamme Tee © 2026',
+    },
   },
   ru: {
     navigation: {
@@ -203,6 +206,9 @@ export const dictionaries = {
       anonymous: 'Анонимный',
       cancel: 'Отмена',
       note: 'На один аккаунт доступно одно сообщение.',
+    },
+    footer: {
+      copyright: 'Yamme Tee © 2026',
     },
   },
 };

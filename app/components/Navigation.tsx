@@ -86,7 +86,7 @@ const Navigation = () => {
               )}
               <button
                 onClick={toggleLanguage}
-                className="px-3 py-2 text-sm font-medium hover:text-gray-300 transition-colors"
+                className="px-3 py-2 text-[1.3rem] leading-none font-medium hover:text-gray-300 transition-colors"
               >
                 {language === 'en' ? '🇷🇺' : '🇺🇸'}
               </button>
@@ -96,7 +96,7 @@ const Navigation = () => {
           <div className="md:hidden flex items-center space-x-2">
             <button
               onClick={toggleLanguage}
-              className="px-2 py-1 text-sm font-medium hover:text-gray-300 transition-colors"
+              className="px-2 py-1 text-[1.3rem] leading-none font-medium hover:text-gray-300 transition-colors"
             >
               {language === 'en' ? '🇷🇺' : '🇺🇸'}
             </button>

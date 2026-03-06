@@ -44,11 +44,15 @@ function readLanguageSnapshot(): Language {
   return saved === 'en' || saved === 'ru' ? saved : 'ru';
 }
 
+function readServerLanguageSnapshot(): Language {
+  return 'ru';
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const language = useSyncExternalStore(
+  const language: Language = useSyncExternalStore<Language>(
     subscribeLanguage,
     readLanguageSnapshot,
-    () => 'ru',
+    readServerLanguageSnapshot,
   );
 
   const setLanguage = (lang: Language) => {
