@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { loadAllReleases } from '../lib/releases';
 import type { Release } from '../types/release';
 import LoadingGlow from '../components/LoadingGlow';
+import { dedupePromise, fetchJsonDedupe } from '../lib/request-dedupe';
 
 interface ProfileData {
   email: string;
@@ -61,29 +62,29 @@ export default function AccountPage() {
   const [nickname, setNickname] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const savedTimeoutRef = useRef<number | null>(null);
   const [loading, setLoading] = useState(true);
   const loadingText = language === 'ru' ? 'загрузка...' : 'loading...';
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [profileResponse, likesResponse, releaseData] = await Promise.all([
-          fetch('/api/me/profile'),
-          fetch('/api/me/liked-tracks'),
-          loadAllReleases(),
+        const [profileResult, likesResult, releaseData] = await Promise.all([
+          fetchJsonDedupe<ProfileData>('GET:/api/me/profile', '/api/me/profile'),
+          fetchJsonDedupe<LikedTracksData>('GET:/api/me/liked-tracks', '/api/me/liked-tracks'),
+          dedupePromise<Release[]>('GET:/tracks/releases', () => loadAllReleases()),
         ]);
 
-        if (profileResponse.ok) {
-          const profileData: ProfileData = await profileResponse.json();
+        if (profileResult.ok && profileResult.data) {
+          const profileData = profileResult.data;
           setProfile(profileData);
           setFirstName(profileData.firstName || '');
           setLastName(profileData.lastName || '');
           setNickname(profileData.nickname || '');
         }
 
-        if (likesResponse.ok) {
-          const likeData: LikedTracksData = await likesResponse.json();
-          setLikedTrackIds(likeData.likedTrackIds || []);
+        if (likesResult.ok && likesResult.data) {
+          setLikedTrackIds(likesResult.data.likedTrackIds || []);
         }
 
         setReleases(releaseData);
@@ -93,6 +94,12 @@ export default function AccountPage() {
     };
 
     load();
+
+    return () => {
+      if (savedTimeoutRef.current) {
+        window.clearTimeout(savedTimeoutRef.current);
+      }
+    };
   }, []);
 
   const saveProfile = async (e: React.FormEvent) => {
@@ -124,7 +131,10 @@ export default function AccountPage() {
     });
 
     setSaved(true);
-    setTimeout(() => setSaved(false), 2200);
+    if (savedTimeoutRef.current) {
+      window.clearTimeout(savedTimeoutRef.current);
+    }
+    savedTimeoutRef.current = window.setTimeout(() => setSaved(false), 2200);
   };
 
   const allTracks = useMemo<FlatTrack[]>(() => {

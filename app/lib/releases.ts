@@ -32,6 +32,11 @@ export async function loadAllReleases(): Promise<Release[]> {
 }
 
 export async function loadReleaseById(id: string): Promise<Release | null> {
-  const releases = await loadAllReleases();
-  return releases.find((release) => release.id === id) ?? null;
+  const registry = await loadReleaseRegistry();
+  const item = registry.find((entry) => entry.id === id);
+  if (!item) return null;
+
+  const response = await fetch(item.dataFile, { cache: "no-store" });
+  if (!response.ok) return null;
+  return (await response.json()) as Release;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useSyncExternalStore, ReactNode } from 'react';
 import { Language, Dictionary, dictionaries } from '../lib/i18n';
 
 interface LanguageContextType {
@@ -10,23 +10,51 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LANGUAGE_KEY = 'language';
+const languageListeners = new Set<() => void>();
+
+function emitLanguageChange() {
+  languageListeners.forEach((listener) => listener());
+}
+
+function subscribeLanguage(listener: () => void) {
+  languageListeners.add(listener);
+
+  const onStorage = (event: StorageEvent) => {
+    if (!event.key || event.key === LANGUAGE_KEY) {
+      listener();
+    }
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', onStorage);
+  }
+
+  return () => {
+    languageListeners.delete(listener);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', onStorage);
+    }
+  };
+}
+
+function readLanguageSnapshot(): Language {
+  if (typeof window === 'undefined') return 'ru';
+  const saved = localStorage.getItem(LANGUAGE_KEY);
+  return saved === 'en' || saved === 'ru' ? saved : 'ru';
+}
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(() => {
-    if (typeof window !== 'undefined') {
-      const savedLanguage = localStorage.getItem('language') as Language;
-      if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'ru')) {
-        return savedLanguage;
-      }
-    }
-    return 'ru';
-  });
+  const language = useSyncExternalStore(
+    subscribeLanguage,
+    readLanguageSnapshot,
+    () => 'ru',
+  );
 
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('language', lang);
-    }
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(LANGUAGE_KEY, lang);
+    emitLanguageChange();
   };
 
   const t = dictionaries[language];

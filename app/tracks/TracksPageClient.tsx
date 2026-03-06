@@ -11,6 +11,8 @@ import type { Release } from "../types/release";
 import LoadingGlow from '../components/LoadingGlow';
 import { preloadAudio } from '../lib/audio-preload';
 import { resolveTrackAssetSource } from '../lib/audio-source';
+import { dedupePromise } from '../lib/request-dedupe';
+import { logClientError } from '../lib/client-log';
 
 export default function TracksPageClient() {
   const { t, language } = useLanguage();
@@ -24,10 +26,10 @@ export default function TracksPageClient() {
   useEffect(() => {
     const loadTracks = async () => {
       try {
-        const loadedReleases = await loadAllReleases();
+        const loadedReleases = await dedupePromise<Release[]>('GET:/tracks/releases', () => loadAllReleases());
         setReleases(loadedReleases);
       } catch (error) {
-        console.error('Error loading tracks:', error);
+        logClientError('Error loading tracks:', error);
       } finally {
         setLoading(false);
       }

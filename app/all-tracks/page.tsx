@@ -9,6 +9,8 @@ import { createSupabaseBrowserClient } from '../lib/supabase/client';
 import { Heart, Pause, Play } from 'lucide-react';
 import LoadingGlow from '../components/LoadingGlow';
 import { preloadAudio } from '../lib/audio-preload';
+import { dedupePromise, fetchJsonDedupe } from '../lib/request-dedupe';
+import { logClientError } from '../lib/client-log';
 
 interface FlatTrack {
   id: string;
@@ -20,6 +22,13 @@ interface FlatTrack {
   releaseTitle: string;
 }
 
+interface TrackStatsMap {
+  [trackId: string]: {
+    playsTotal: number;
+    uniqueListeners: number;
+  };
+}
+
 export default function AllTracksPage() {
   const { t, language } = useLanguage();
   const { currentTrack, isPlaying, setQueueAndPlay, setIsPlaying } = useAudio();
@@ -27,13 +36,14 @@ export default function AllTracksPage() {
   const [likedTrackIds, setLikedTrackIds] = useState<string[]>([]);
   const [likingTrackId, setLikingTrackId] = useState<string | null>(null);
   const [isAuthed, setIsAuthed] = useState(false);
+  const [trackStats, setTrackStats] = useState<TrackStatsMap>({});
   const [loading, setLoading] = useState(true);
   const loadingText = language === 'ru' ? 'загрузка...' : 'loading...';
 
   useEffect(() => {
     const load = async () => {
       try {
-        const loadedReleases = await loadAllReleases();
+        const loadedReleases = await dedupePromise<Release[]>('GET:/tracks/releases', () => loadAllReleases());
         setReleases(loadedReleases);
 
         const supabase = createSupabaseBrowserClient();
@@ -43,14 +53,16 @@ export default function AllTracksPage() {
 
         if (user) {
           setIsAuthed(true);
-          const likesResponse = await fetch('/api/me/liked-tracks');
-          if (likesResponse.ok) {
-            const likesData = await likesResponse.json();
-            setLikedTrackIds(likesData.likedTrackIds || []);
+          const likesResult = await fetchJsonDedupe<{ likedTrackIds?: string[] }>(
+            'GET:/api/me/liked-tracks',
+            '/api/me/liked-tracks',
+          );
+          if (likesResult.ok && likesResult.data) {
+            setLikedTrackIds(likesResult.data.likedTrackIds || []);
           }
         }
       } catch (error) {
-        console.error('Error loading all tracks:', error);
+        logClientError('Error loading all tracks:', error);
       } finally {
         setLoading(false);
       }
@@ -78,6 +90,27 @@ export default function AllTracksPage() {
 
     return list;
   }, [releases]);
+
+  useEffect(() => {
+    const ids = [...new Set(tracks.map((track) => track.id).filter(Boolean))];
+    if (!ids.length) {
+      setTrackStats({});
+      return;
+    }
+
+    const loadStats = async () => {
+      try {
+        const response = await fetch(`/api/tracks/stats?ids=${encodeURIComponent(ids.join(','))}`);
+        if (!response.ok) return;
+        const payload = await response.json();
+        setTrackStats(payload.stats || {});
+      } catch (error) {
+        logClientError('Error loading track stats:', error);
+      }
+    };
+
+    loadStats();
+  }, [tracks]);
 
   const playTrack = (trackIndex: number) => {
     const queue = tracks.map((track) => ({
@@ -163,7 +196,9 @@ export default function AllTracksPage() {
                     </span>
                     <div className="min-w-0">
                       <p className="font-medium truncate">{track.title}</p>
-                      <p className="text-xs text-gray-400 truncate">{track.artist} · {t.allTracks.release}: {track.releaseTitle}</p>
+                      <p className="text-xs text-gray-400 truncate">
+                        {track.artist} · {t.allTracks.release}: {track.releaseTitle} · {trackStats[track.id]?.playsTotal || 0} {language === 'ru' ? 'просл.' : 'plays'}
+                      </p>
                     </div>
                   </div>
                 </button>

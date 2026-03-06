@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Play, Pause, Repeat, Shuffle, Volume2, X, SkipBack, SkipForward } from "lucide-react";
 import Image from "next/image";
 import { useAudio } from "../contexts/AudioContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { resolveAudioSource, resolveCoverSource } from "../lib/audio-source";
 import { preloadAudio } from "../lib/audio-preload";
+import { logClientError } from "../lib/client-log";
 
 interface WaveSurferInstance {
   destroy: () => void;
@@ -51,6 +52,8 @@ export default function AudioPlayer() {
   const isPlayingRef = useRef(false);
   const mountedRef = useRef(true);
   const lastRenderedSecondRef = useRef(-1);
+  const playTrackedTrackIdRef = useRef<string | null>(null);
+  const playTrackRequestInFlightRef = useRef(false);
 
   useEffect(() => {
     volumeRef.current = volume;
@@ -89,6 +92,42 @@ export default function AudioPlayer() {
       setCurrentTime(0);
       setDuration(0);
       shuffleHistoryRef.current = [];
+      playTrackedTrackIdRef.current = null;
+      playTrackRequestInFlightRef.current = false;
+    }
+  }, [currentTrack]);
+
+  const trackPlayIfEligible = useCallback(async (playedSeconds: number, durationSeconds: number) => {
+    if (!currentTrack) return;
+    if (playTrackRequestInFlightRef.current) return;
+    if (playTrackedTrackIdRef.current === currentTrack.id) return;
+
+    const threshold = durationSeconds > 0
+      ? Math.max(10, Math.min(30, Math.floor(durationSeconds * 0.5)))
+      : 30;
+
+    if (playedSeconds < threshold) return;
+
+    playTrackRequestInFlightRef.current = true;
+    try {
+      const response = await fetch(`/api/tracks/${encodeURIComponent(currentTrack.id)}/play`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          playedSeconds,
+          durationSeconds,
+        }),
+      });
+
+      if (response.ok) {
+        playTrackedTrackIdRef.current = currentTrack.id;
+      }
+    } catch (error) {
+      logClientError('Failed to track play:', error);
+    } finally {
+      playTrackRequestInFlightRef.current = false;
     }
   }, [currentTrack]);
 
@@ -168,6 +207,8 @@ export default function AudioPlayer() {
           if (nextSecond !== lastRenderedSecondRef.current) {
             lastRenderedSecondRef.current = nextSecond;
             setCurrentTime(nextSecond);
+            const durationSeconds = Math.floor(wavesurfer.current.getDuration() || 0);
+            trackPlayIfEligible(nextSecond, durationSeconds);
           }
         });
 
@@ -175,7 +216,7 @@ export default function AudioPlayer() {
         wavesurfer.current.on("pause", () => setIsPlaying(false));
 
         wavesurfer.current.on("error", (error) => {
-          console.error('WaveSurfer error:', error);
+          logClientError('WaveSurfer error:', error);
         });
 
         wavesurfer.current.on('finish', () => {
@@ -196,7 +237,7 @@ export default function AudioPlayer() {
         wavesurfer.current.setVolume(volumeRef.current);
       });
     }
-  }, [currentTrack, setIsPlaying, playNextTrack, queue, currentIndex, setQueueAndPlay]);
+  }, [currentTrack, setIsPlaying, playNextTrack, queue, currentIndex, setQueueAndPlay, trackPlayIfEligible]);
 
   useEffect(() => {
     if (wavesurfer.current) {

@@ -159,10 +159,10 @@ begin
   end if;
 
   return query
-  update public.comments
-  set likes = likes + 1
-  where comments.id = comment_id
-  returning comments.id, comments.user_id, comments.author, comments.content, comments.is_anonymous, comments.likes, comments.created_at;
+  update public.comments as c
+  set likes = c.likes + 1
+  where c.id = comment_id
+  returning c.id, c.user_id, c.author, c.content, c.is_anonymous, c.likes, c.created_at;
 end;
 $$;
 

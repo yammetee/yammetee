@@ -10,25 +10,35 @@ import type { Release, ReleaseTrack } from "../../types/release";
 import LoadingGlow from '../../components/LoadingGlow';
 import { preloadAudio } from '../../lib/audio-preload';
 import { resolveTrackAssetSource } from '../../lib/audio-source';
+import { dedupePromise } from '../../lib/request-dedupe';
+import { logClientError } from '../../lib/client-log';
 
 interface TrackDetailClientProps {
   id: string;
+}
+
+interface TrackStatsMap {
+  [trackId: string]: {
+    playsTotal: number;
+    uniqueListeners: number;
+  };
 }
 
 export default function TrackDetailClient({ id }: TrackDetailClientProps) {
   const { t, language } = useLanguage();
   const { currentTrack, isPlaying, setQueueAndPlay, setIsPlaying } = useAudio();
   const [release, setRelease] = useState<Release | null>(null);
+  const [trackStats, setTrackStats] = useState<TrackStatsMap>({});
   const [loading, setLoading] = useState(true);
   const loadingText = language === 'ru' ? 'загрузка...' : 'loading...';
 
   useEffect(() => {
     const loadTrack = async () => {
       try {
-        const data = await loadReleaseById(id);
+        const data = await dedupePromise<Release | null>(`GET:/tracks/release/${id}`, () => loadReleaseById(id));
         setRelease(data);
       } catch (error) {
-        console.error('Error loading track:', error);
+        logClientError('Error loading track:', error);
       } finally {
         setLoading(false);
       }
@@ -38,6 +48,29 @@ export default function TrackDetailClient({ id }: TrackDetailClientProps) {
       loadTrack();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!release?.tracks?.length) {
+      setTrackStats({});
+      return;
+    }
+
+    const ids = [...new Set(release.tracks.map((track) => track.id).filter(Boolean))];
+    if (!ids.length) return;
+
+    const loadStats = async () => {
+      try {
+        const response = await fetch(`/api/tracks/stats?ids=${encodeURIComponent(ids.join(','))}`);
+        if (!response.ok) return;
+        const payload = await response.json();
+        setTrackStats(payload.stats || {});
+      } catch (error) {
+        logClientError('Error loading release track stats:', error);
+      }
+    };
+
+    loadStats();
+  }, [release]);
 
   const playTrack = (track: ReleaseTrack) => {
     if (!release) return;
@@ -126,6 +159,9 @@ export default function TrackDetailClient({ id }: TrackDetailClientProps) {
                         )}
                       </span>
                       <span className="truncate">{track.title}</span>
+                      <span className="text-xs text-gray-500 shrink-0">
+                        {trackStats[track.id]?.playsTotal || 0} {language === 'ru' ? 'просл.' : 'plays'}
+                      </span>
                     </span>
                   </button>
                 );

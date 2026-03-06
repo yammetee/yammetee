@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Heart } from 'lucide-react';
 import LoadingGlow from '../components/LoadingGlow';
+import { fetchJsonDedupe } from '../lib/request-dedupe';
+import { logClientError } from '../lib/client-log';
 
 interface Comment {
   id: string;
@@ -74,24 +76,31 @@ export default function Wall() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const messageTimeoutRef = useRef<number | null>(null);
   const loadingText = language === 'ru' ? 'загрузка...' : 'loading...';
   const overlayLoading = loading || Boolean(likingCommentId) || Boolean(deletingCommentId);
+
+  const scheduleMessageClear = () => {
+    if (messageTimeoutRef.current) {
+      window.clearTimeout(messageTimeoutRef.current);
+    }
+    messageTimeoutRef.current = window.setTimeout(() => setMessage(''), 3000);
+  };
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [commentsResponse, profileResponse] = await Promise.all([
-          fetch('/api/comments'),
-          fetch('/api/me/profile'),
+        const [commentsResult, profileResult] = await Promise.all([
+          fetchJsonDedupe<Comment[]>('GET:/api/comments', '/api/comments'),
+          fetchJsonDedupe<ProfileData>('GET:/api/me/profile', '/api/me/profile'),
         ]);
 
-        if (commentsResponse.ok) {
-          const commentsData = await commentsResponse.json();
-          setComments(commentsData);
+        if (commentsResult.ok && Array.isArray(commentsResult.data)) {
+          setComments(commentsResult.data);
         }
 
-        if (profileResponse.ok) {
-          const profileData: ProfileData = await profileResponse.json();
+        if (profileResult.ok && profileResult.data) {
+          const profileData = profileResult.data;
           const prefilledName = getDefaultAuthorName(profileData);
           setDefaultAuthor(prefilledName);
           setAuthor(prefilledName);
@@ -100,13 +109,19 @@ export default function Wall() {
           setUserCommentId(profileData.userCommentId || null);
         }
       } catch (error) {
-        console.error('Error loading wall data:', error);
+        logClientError('Error loading wall data:', error);
       } finally {
         setInitialLoading(false);
       }
     };
 
     loadData();
+
+    return () => {
+      if (messageTimeoutRef.current) {
+        window.clearTimeout(messageTimeoutRef.current);
+      }
+    };
   }, []);
 
   const handleLike = async (id: string) => {
@@ -120,7 +135,7 @@ export default function Wall() {
         setComments(comments.map((c) => (c.id === id ? updatedComment : c)));
       }
     } catch (error) {
-      console.error('Error liking comment:', error);
+      logClientError('Error liking comment:', error);
     } finally {
       setLikingCommentId(null);
     }
@@ -157,9 +172,9 @@ export default function Wall() {
         setUserCommentId(null);
       }
       setMessage(t.wall.deleted);
-      setTimeout(() => setMessage(''), 3000);
+      scheduleMessageClear();
     } catch (error) {
-      console.error('Error deleting comment:', error);
+      logClientError('Error deleting comment:', error);
       setMessage(t.wall.error);
     } finally {
       setDeletingCommentId(null);
@@ -230,13 +245,13 @@ export default function Wall() {
         setMessage(t.wall.error);
       }
     } catch (error) {
-      console.error('Error saving comment:', error);
+      logClientError('Error saving comment:', error);
       setMessage(t.wall.error);
     } finally {
       setLoading(false);
     }
 
-    setTimeout(() => setMessage(''), 3000);
+    scheduleMessageClear();
   };
 
   if (initialLoading) {

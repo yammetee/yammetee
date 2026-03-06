@@ -1,6 +1,9 @@
 import { resolveAudioSource } from "./audio-source";
 
 const prefetched = new Set<string>();
+const prefetchOrder: string[] = [];
+const prefetchLinks = new Map<string, HTMLLinkElement>();
+const MAX_PREFETCHED = 80;
 let preconnected = false;
 
 function getOrigin(url: string): string | null {
@@ -25,15 +28,32 @@ export function preconnectAudioOrigin(audioPath: string) {
 }
 
 export function preloadAudio(audioPath: string) {
-  if (typeof window === "undefined") return;
+  if (typeof document === "undefined") return;
   const src = resolveAudioSource(audioPath);
   if (prefetched.has(src)) return;
-  prefetched.add(src);
 
   preconnectAudioOrigin(audioPath);
 
-  const audio = new Audio();
-  audio.preload = "auto";
-  audio.src = src;
-  audio.load();
+  // Use <link rel="preload"> instead of creating many Audio elements.
+  // This reduces retained objects and decoder work while keeping startup fast.
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = "audio";
+  link.href = src;
+  document.head.appendChild(link);
+
+  prefetched.add(src);
+  prefetchOrder.push(src);
+  prefetchLinks.set(src, link);
+
+  while (prefetchOrder.length > MAX_PREFETCHED) {
+    const oldest = prefetchOrder.shift();
+    if (!oldest) continue;
+    prefetched.delete(oldest);
+    const oldLink = prefetchLinks.get(oldest);
+    if (oldLink) {
+      oldLink.remove();
+      prefetchLinks.delete(oldest);
+    }
+  }
 }
