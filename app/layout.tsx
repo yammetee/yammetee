@@ -5,6 +5,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { AudioProvider } from "./contexts/AudioContext";
 import GlobalAudioPlayer from "./components/GlobalAudioPlayer";
 import { ARTIST_KEYWORDS, ARTIST_NAME, getArtistJsonLd, getSiteUrl } from "./lib/seo";
+import { Analytics } from "@vercel/analytics/next";
 
 const siteUrl = getSiteUrl();
 const artistJsonLd = getArtistJsonLd();
@@ -96,6 +97,7 @@ export default function RootLayout({
             <GlobalAudioPlayer />
           </AudioProvider>
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
