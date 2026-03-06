@@ -72,11 +72,12 @@ export default function TracksPageClient() {
           <Link
             key={release.id}
             href={`/tracks/${release.id}`}
+            className="w-full sm:w-auto"
             onMouseEnter={() => {
               if (release.tracks[0]?.audio) preloadAudio(release.tracks[0].audio);
             }}
           >
-            <div className="w-[192px] bg-neutral-900 overflow-hidden border border-neutral-800 hover:border-neutral-600 transition-colors cursor-pointer group">
+            <div className="w-full sm:w-[192px] bg-neutral-900 overflow-hidden border border-neutral-800 hover:border-neutral-600 transition-colors cursor-pointer group">
               <div className="relative aspect-square">
                 <Image
                   width={500}

@@ -63,11 +63,9 @@ function BrandIcon({ item }: { item: LinkItem }) {
     return (
       <svg
         viewBox="0 0 24 24"
-        width="18"
-        height="18"
         fill="currentColor"
         aria-hidden
-        className="text-gray-200 group-hover:text-white transition-colors"
+        className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-gray-200 group-hover:text-white transition-colors"
       >
         <path d={item.iconPath} />
       </svg>
@@ -78,11 +76,11 @@ function BrandIcon({ item }: { item: LinkItem }) {
     <Image
       src={item.iconSrc}
       alt=""
-      width={18}
-      height={18}
+      width={16}
+      height={16}
       unoptimized
       aria-hidden
-      className="w-[18px] h-[18px] grayscale invert opacity-85 group-hover:opacity-100 transition-opacity"
+      className="w-4 h-4 sm:w-[18px] sm:h-[18px] grayscale invert opacity-85 group-hover:opacity-100 transition-opacity"
     />
   );
 }
@@ -94,14 +92,14 @@ export default function Footer() {
     <footer className="border-t border-neutral-800 bg-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-[10px]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="order-1 sm:order-2 flex flex-wrap justify-center sm:justify-end gap-2">
+          <div className="order-1 sm:order-2 flex w-full sm:w-auto flex-nowrap justify-between sm:justify-end gap-1 sm:gap-2">
             {socialLinks.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center justify-center p-2 rounded-sm bg-neutral-950/40 hover:bg-neutral-900/70 transition-colors"
+                className="group inline-flex items-center justify-center p-1.5 sm:p-2 rounded-sm bg-neutral-950/40 hover:bg-neutral-900/70 transition-colors"
                 aria-label={item.name}
               >
                 <BrandIcon item={item} />
