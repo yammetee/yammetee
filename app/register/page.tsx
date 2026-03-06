@@ -7,6 +7,7 @@ import { createSupabaseBrowserClient } from '../lib/supabase/client';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Eye, EyeOff } from 'lucide-react';
 import LoadingGlow from '../components/LoadingGlow';
+import { getSiteUrl } from '../lib/seo';
 
 export default function RegisterPage() {
   const { t, language } = useLanguage();
@@ -34,9 +35,16 @@ export default function RegisterPage() {
     }
 
     const supabase = createSupabaseBrowserClient();
+    const emailRedirectTo =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/account`
+        : `${getSiteUrl()}/account`;
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo,
+      },
     });
 
     setLoading(false);
