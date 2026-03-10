@@ -53,6 +53,12 @@ export const dictionaries = {
       register: 'Create account',
       noAccount: 'No account yet?',
       hasAccount: 'Already have an account?',
+      legalConsentPrefix: 'I agree to the',
+      legalConsentTerms: 'Terms of Use',
+      legalConsentAnd: 'and',
+      legalConsentPrivacy: 'Privacy Policy',
+      legalConsentHint: 'Please read our Cookie Policy.',
+      legalConsentError: 'You must accept Terms of Use and Privacy Policy.',
       error: 'Authentication failed',
     },
     account: {
@@ -103,6 +109,16 @@ export const dictionaries = {
     },
     footer: {
       copyright: 'Yamme Tee © 2026',
+      terms: 'Terms',
+      privacy: 'Privacy',
+      cookies: 'Cookies',
+      copyrightPolicy: 'Copyright',
+    },
+    cookieConsent: {
+      message: 'We use cookies for essential site functionality and optional analytics.',
+      accept: 'Accept',
+      decline: 'Decline',
+      learnMore: 'Learn more',
     },
   },
   ru: {
@@ -159,6 +175,12 @@ export const dictionaries = {
       register: 'Создать аккаунт',
       noAccount: 'Нет аккаунта?',
       hasAccount: 'Уже есть аккаунт?',
+      legalConsentPrefix: 'Я принимаю',
+      legalConsentTerms: 'Условия использования',
+      legalConsentAnd: 'и',
+      legalConsentPrivacy: 'Политику конфиденциальности',
+      legalConsentHint: 'Пожалуйста, ознакомьтесь с Политикой cookie.',
+      legalConsentError: 'Нужно принять Условия использования и Политику конфиденциальности.',
       error: 'Ошибка авторизации',
     },
     account: {
@@ -209,6 +231,16 @@ export const dictionaries = {
     },
     footer: {
       copyright: 'Yamme Tee © 2026',
+      terms: 'Условия',
+      privacy: 'Конфиденциальность',
+      cookies: 'Cookie',
+      copyrightPolicy: 'Авторские права',
+    },
+    cookieConsent: {
+      message: 'Мы используем cookie для базовой работы сайта и дополнительной аналитики.',
+      accept: 'Принять',
+      decline: 'Отклонить',
+      learnMore: 'Подробнее',
     },
   },
 };

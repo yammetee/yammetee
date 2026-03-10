@@ -8,6 +8,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { Eye, EyeOff } from 'lucide-react';
 import LoadingGlow from '../components/LoadingGlow';
 import { getSiteUrl } from '../lib/seo';
+import { LEGAL_VERSION } from '../lib/legal-content';
 
 export default function RegisterPage() {
   const { t, language } = useLanguage();
@@ -17,6 +18,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,6 +35,11 @@ export default function RegisterPage() {
       setLoading(false);
       return;
     }
+    if (!acceptedLegal) {
+      setError(t.auth.legalConsentError);
+      setLoading(false);
+      return;
+    }
 
     const supabase = createSupabaseBrowserClient();
     const emailRedirectTo =
@@ -44,6 +51,11 @@ export default function RegisterPage() {
       password,
       options: {
         emailRedirectTo,
+        data: {
+          legal_consent_at: new Date().toISOString(),
+          legal_consent_version: LEGAL_VERSION,
+          legal_consent_language: language,
+        },
       },
     });
 
@@ -121,6 +133,35 @@ export default function RegisterPage() {
               {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+        </div>
+        <div className="rounded-md border border-neutral-800 bg-neutral-950 p-3">
+          <label className="flex gap-2 items-start text-sm text-neutral-200">
+            <input
+              type="checkbox"
+              checked={acceptedLegal}
+              onChange={(e) => setAcceptedLegal(e.target.checked)}
+              className="mt-0.5"
+              required
+            />
+            <span>
+              {t.auth.legalConsentPrefix}{' '}
+              <Link href="/legal/terms" className="underline text-white">
+                {t.auth.legalConsentTerms}
+              </Link>{' '}
+              {t.auth.legalConsentAnd}{' '}
+              <Link href="/legal/privacy" className="underline text-white">
+                {t.auth.legalConsentPrivacy}
+              </Link>
+              .
+            </span>
+          </label>
+          <p className="text-xs text-neutral-400 mt-2">
+            {t.auth.legalConsentHint}{' '}
+            <Link href="/legal/cookies" className="underline text-white">
+              {t.footer.cookies}
+            </Link>
+            .
+          </p>
         </div>
 
         {error ? <p className="text-red-400 text-sm">{error}</p> : null}

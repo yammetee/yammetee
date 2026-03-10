@@ -91,7 +91,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-neutral-800 bg-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-[10px]">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2">
           <div className="order-1 sm:order-2 flex w-full sm:w-auto flex-nowrap justify-between sm:justify-end gap-1 sm:gap-2">
             {socialLinks.map((item) => (
               <Link
@@ -107,6 +107,12 @@ export default function Footer() {
             ))}
           </div>
           <p className="order-2 sm:order-1 text-xs text-gray-500 text-center sm:text-left">{t.footer.copyright}</p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs text-gray-400">
+          <Link href="/legal/terms" className="hover:text-white transition-colors">{t.footer.terms}</Link>
+          <Link href="/legal/privacy" className="hover:text-white transition-colors">{t.footer.privacy}</Link>
+          <Link href="/legal/cookies" className="hover:text-white transition-colors">{t.footer.cookies}</Link>
+          <Link href="/legal/copyright" className="hover:text-white transition-colors">{t.footer.copyrightPolicy}</Link>
         </div>
       </div>
     </footer>

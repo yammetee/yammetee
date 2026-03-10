@@ -5,8 +5,8 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { AudioProvider } from "./contexts/AudioContext";
 import GlobalAudioPlayer from "./components/GlobalAudioPlayer";
 import Footer from "./components/Footer";
+import CookieConsent from "./components/CookieConsent";
 import { ARTIST_KEYWORDS, ARTIST_NAME, getArtistJsonLd, getSiteUrl } from "./lib/seo";
-import { Analytics } from "@vercel/analytics/next";
 
 const siteUrl = getSiteUrl();
 const artistJsonLd = getArtistJsonLd();
@@ -100,9 +100,9 @@ export default function RootLayout({
               <Footer />
             </div>
             <GlobalAudioPlayer />
+            <CookieConsent />
           </AudioProvider>
         </LanguageProvider>
-        <Analytics />
       </body>
     </html>
   );
