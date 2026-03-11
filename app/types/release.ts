@@ -13,6 +13,7 @@ export interface Release {
   cover: string;
   releaseDate: string;
   releaseType: string;
+  displayOrder?: number;
   tracks: ReleaseTrack[];
 }
 

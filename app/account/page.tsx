@@ -25,7 +25,7 @@ interface FlatTrack {
   id: string;
   title: string;
   audio: string;
-  releaseTitle: string;
+  releaseTitles: string[];
 }
 
 function buildAvatarLabel(profile: ProfileData | null) {
@@ -138,21 +138,31 @@ export default function AccountPage() {
   };
 
   const allTracks = useMemo<FlatTrack[]>(() => {
-    const tracks: FlatTrack[] = [];
+    const byId = new Map<string, FlatTrack>();
     releases.forEach((release) => {
       release.tracks.forEach((track) => {
-        tracks.push({
+        const existing = byId.get(track.id);
+        if (existing) {
+          if (!existing.releaseTitles.includes(release.title)) {
+            existing.releaseTitles.push(release.title);
+          }
+          return;
+        }
+
+        byId.set(track.id, {
           id: track.id,
           title: track.title,
           audio: track.audio,
-          releaseTitle: release.title,
+          releaseTitles: [release.title],
         });
       });
     });
-    return tracks;
+    return Array.from(byId.values());
   }, [releases]);
 
-  const likedTracks = allTracks.filter((track) => likedTrackIds.includes(track.audio));
+  const likedTracks = allTracks.filter(
+    (track) => likedTrackIds.includes(track.id) || likedTrackIds.includes(track.audio),
+  );
   const avatarLabel = buildAvatarLabel({
     ...(profile || {
       email: '',
@@ -250,8 +260,8 @@ export default function AccountPage() {
         ) : (
           <ul className="space-y-2">
             {likedTracks.map((track) => (
-              <li key={track.audio} className="text-sm">
-                {track.title} <span className="text-gray-500">({track.releaseTitle})</span>
+              <li key={track.id} className="text-sm">
+                {track.title} <span className="text-gray-500">({track.releaseTitles.join(', ')})</span>
               </li>
             ))}
           </ul>

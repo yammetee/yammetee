@@ -21,7 +21,7 @@
       "lyrics": ""
     },
     {
-      "id": "3-bares-new-yamme-tee-bares-61d8703d",
+      "id": "8-bares-yamme-tee-bares-1be82f79",
       "title": "Yamme Tee -  Bares",
       "artist": "Yamme Tee",
       "audio": "/tracks/audio/50-parts-ep-18e8f682/3-bares-new-yamme-tee-bares-61d8703d.mp3",
@@ -42,11 +42,12 @@
       "lyrics": ""
     },
     {
-      "id": "6-dead-air-yamme-tee-dead-air-f5643b13",
+      "id": "yamme-tee-dead-air-2d4e2052",
       "title": "Yamme Tee - Dead Air",
       "artist": "Yamme Tee",
       "audio": "/tracks/audio/50-parts-ep-18e8f682/6-dead-air-yamme-tee-dead-air-f5643b13.mp3",
       "lyrics": ""
     }
-  ]
+  ],
+  "displayOrder": 5
 }

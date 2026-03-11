@@ -19,7 +19,7 @@ interface FlatTrack {
   audio: string;
   cover: string;
   lyrics: string;
-  releaseTitle: string;
+  releaseTitles: string[];
 }
 
 interface TrackStatsMap {
@@ -72,24 +72,43 @@ export default function AllTracksPage() {
   }, []);
 
   const tracks = useMemo<FlatTrack[]>(() => {
-    const list: FlatTrack[] = [];
+    const byId = new Map<string, FlatTrack>();
 
     releases.forEach((release) => {
       release.tracks.forEach((track) => {
-        list.push({
+        const existing = byId.get(track.id);
+        if (existing) {
+          if (!existing.releaseTitles.includes(release.title)) {
+            existing.releaseTitles.push(release.title);
+          }
+          return;
+        }
+
+        byId.set(track.id, {
           id: track.id,
           title: track.title,
           artist: track.artist || release.artist,
           audio: track.audio,
           cover: release.cover,
           lyrics: track.lyrics || '',
-          releaseTitle: release.title,
+          releaseTitles: [release.title],
         });
       });
     });
 
-    return list;
+    return Array.from(byId.values());
   }, [releases]);
+
+  const sortedTracks = useMemo<FlatTrack[]>(() => {
+    return [...tracks].sort((a, b) => {
+      const playsA = trackStats[a.id]?.playsTotal || 0;
+      const playsB = trackStats[b.id]?.playsTotal || 0;
+      if (playsB !== playsA) return playsB - playsA;
+      const titleCompare = a.title.localeCompare(b.title, 'ru');
+      if (titleCompare !== 0) return titleCompare;
+      return a.id.localeCompare(b.id);
+    });
+  }, [tracks, trackStats]);
 
   useEffect(() => {
     const ids = [...new Set(tracks.map((track) => track.id).filter(Boolean))];
@@ -112,8 +131,8 @@ export default function AllTracksPage() {
     loadStats();
   }, [tracks]);
 
-  const playTrack = (trackIndex: number) => {
-    const queue = tracks.map((track) => ({
+  const playTrack = (trackId: string) => {
+    const queue = sortedTracks.map((track) => ({
       id: track.id,
       title: track.title,
       artist: track.artist,
@@ -122,6 +141,7 @@ export default function AllTracksPage() {
       lyrics: track.lyrics,
     }));
 
+    const trackIndex = queue.findIndex((item) => item.id === trackId);
     const selected = queue[trackIndex];
     if (!selected) return;
 
@@ -174,12 +194,13 @@ export default function AllTracksPage() {
 
       <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
         <div className="divide-y divide-neutral-800">
-          {tracks.map((track, index) => {
+          {sortedTracks.map((track) => {
             const active = currentTrack?.audio === track.audio && isPlaying;
+            const isLiked = likedTrackIds.includes(track.id) || likedTrackIds.includes(track.audio);
             return (
-              <div key={`${track.audio}-${index}`} className="px-4 py-3 hover:bg-neutral-800 transition-colors flex items-center justify-between gap-3 cursor-pointer">
+              <div key={track.id} className="px-4 py-3 hover:bg-neutral-800 transition-colors flex items-center justify-between gap-3 cursor-pointer">
                 <button
-                  onClick={() => playTrack(index)}
+                  onClick={() => playTrack(track.id)}
                   onMouseEnter={() => preloadAudio(track.audio)}
                   className="flex-1 min-w-0 text-left cursor-pointer"
                 >
@@ -197,7 +218,7 @@ export default function AllTracksPage() {
                     <div className="min-w-0">
                       <p className="font-medium truncate">{track.title}</p>
                       <p className="text-xs text-gray-400 truncate">
-                        {track.artist} · {t.allTracks.release}: {track.releaseTitle} · {trackStats[track.id]?.playsTotal || 0} {language === 'ru' ? 'просл.' : 'plays'}
+                        {track.artist} · {t.allTracks.release}: {track.releaseTitles.join(', ')} · {trackStats[track.id]?.playsTotal || 0} {language === 'ru' ? 'просл.' : 'plays'}
                       </p>
                     </div>
                   </div>
@@ -207,15 +228,15 @@ export default function AllTracksPage() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      toggleLike(track.audio);
+                      toggleLike(track.id);
                     }}
-                    disabled={!isAuthed || likingTrackId === track.audio}
+                    disabled={!isAuthed || likingTrackId === track.id}
                     className="p-1.5 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
-                    title={likedTrackIds.includes(track.audio) ? t.allTracks.unlike : t.allTracks.like}
+                    title={isLiked ? t.allTracks.unlike : t.allTracks.like}
                   >
                     <Heart
                       size={16}
-                      className={likedTrackIds.includes(track.audio) ? 'text-red-500 fill-red-500' : 'text-gray-300'}
+                      className={isLiked ? 'text-red-500 fill-red-500' : 'text-gray-300'}
                     />
                   </button>
                 </div>

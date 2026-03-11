@@ -1,9 +1,20 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { Release, ReleaseRegistryItem } from "../types/release";
+import { toCanonicalTrackId } from "./track-id";
 
 function getPublicPath(relativePath: string): string {
   return path.join(process.cwd(), "public", relativePath.replace(/^\//, ""));
+}
+
+function canonicalizeReleaseTrackIds(release: Release): Release {
+  return {
+    ...release,
+    tracks: (release.tracks || []).map((track) => ({
+      ...track,
+      id: toCanonicalTrackId(track.id),
+    })),
+  };
 }
 
 export async function loadReleaseRegistryServer(): Promise<ReleaseRegistryItem[]> {
@@ -23,7 +34,8 @@ export async function loadAllReleasesServer(): Promise<Release[]> {
       try {
         const filePath = getPublicPath(dataFile);
         const raw = await fs.readFile(filePath, "utf8");
-        return JSON.parse(raw) as Release;
+        const release = JSON.parse(raw) as Release;
+        return canonicalizeReleaseTrackIds(release);
       } catch {
         return null;
       }

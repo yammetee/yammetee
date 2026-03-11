@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '../../../lib/supabase/server';
+import { toCanonicalTrackId } from '../../../lib/track-id';
 
 const MAX_IDS = 200;
 
@@ -16,34 +17,40 @@ function parseIds(input: string | null): string[] {
 
 export async function GET(request: NextRequest) {
   try {
-    const ids = parseIds(request.nextUrl.searchParams.get('ids'));
-    if (!ids.length) {
+    const requestedIds = parseIds(request.nextUrl.searchParams.get('ids'));
+    if (!requestedIds.length) {
       return NextResponse.json({ stats: {} });
     }
+    const canonicalIds = [...new Set(requestedIds.map((id) => toCanonicalTrackId(id)).filter(Boolean))];
 
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from('track_stats')
       .select('track_id, plays_total, unique_listeners')
-      .in('track_id', ids);
+      .in('track_id', canonicalIds);
 
     if (error) {
       console.error('Error loading track stats:', error);
       return NextResponse.json({ error: 'Failed to load track stats' }, { status: 500 });
     }
 
-    const map: Record<string, { playsTotal: number; uniqueListeners: number }> = {};
-    for (const id of ids) {
-      map[id] = { playsTotal: 0, uniqueListeners: 0 };
+    const canonicalStats: Record<string, { playsTotal: number; uniqueListeners: number }> = {};
+    for (const id of canonicalIds) {
+      canonicalStats[id] = { playsTotal: 0, uniqueListeners: 0 };
     }
 
     for (const row of data || []) {
       const trackId = String(row.track_id || '');
       if (!trackId) continue;
-      map[trackId] = {
+      canonicalStats[trackId] = {
         playsTotal: Number(row.plays_total || 0),
         uniqueListeners: Number(row.unique_listeners || 0),
       };
+    }
+
+    const map: Record<string, { playsTotal: number; uniqueListeners: number }> = {};
+    for (const id of requestedIds) {
+      map[id] = canonicalStats[toCanonicalTrackId(id)] || { playsTotal: 0, uniqueListeners: 0 };
     }
 
     return NextResponse.json({ stats: map });

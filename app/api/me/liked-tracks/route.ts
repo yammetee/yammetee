@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '../../../lib/supabase/server';
+import { toCanonicalTrackId } from '../../../lib/track-id';
 
 export async function GET() {
   try {
@@ -23,7 +24,7 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      likedTrackIds: (data || []).map((row) => row.track_id),
+      likedTrackIds: [...new Set((data || []).map((row) => toCanonicalTrackId(String(row.track_id || ''))).filter(Boolean))],
     });
   } catch (error) {
     console.error('Failed to load liked tracks:', error);
@@ -46,12 +47,13 @@ export async function PATCH(request: NextRequest) {
     if (!trackId || typeof trackId !== 'string') {
       return NextResponse.json({ error: 'trackId is required' }, { status: 400 });
     }
+    const canonicalTrackId = toCanonicalTrackId(trackId);
 
     const { data: existingLike, error: findError } = await supabase
       .from('user_liked_tracks')
       .select('user_id')
       .eq('user_id', user.id)
-      .eq('track_id', trackId)
+      .eq('track_id', canonicalTrackId)
       .maybeSingle();
 
     if (findError) {
@@ -64,7 +66,7 @@ export async function PATCH(request: NextRequest) {
         .from('user_liked_tracks')
         .delete()
         .eq('user_id', user.id)
-        .eq('track_id', trackId);
+        .eq('track_id', canonicalTrackId);
 
       if (deleteError) {
         throw deleteError;
@@ -72,7 +74,7 @@ export async function PATCH(request: NextRequest) {
     } else {
       const { error: insertError } = await supabase
         .from('user_liked_tracks')
-        .insert({ user_id: user.id, track_id: trackId });
+        .insert({ user_id: user.id, track_id: canonicalTrackId });
 
       if (insertError) {
         throw insertError;
@@ -93,7 +95,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       liked,
-      likedTrackIds: (updatedLikes || []).map((row) => row.track_id),
+      likedTrackIds: [...new Set((updatedLikes || []).map((row) => toCanonicalTrackId(String(row.track_id || ''))).filter(Boolean))],
     });
   } catch (error) {
     console.error('Failed to update liked tracks:', error);

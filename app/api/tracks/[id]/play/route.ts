@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '../../../../lib/supabase/server';
+import { toCanonicalTrackId } from '../../../../lib/track-id';
 
 const PLAY_SESSION_COOKIE = 'yt_play_session';
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 365;
@@ -14,7 +15,7 @@ function normalizeSeconds(value: unknown): number {
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const trackId = String(id || '').trim();
+    const trackId = toCanonicalTrackId(String(id || '').trim());
     if (!trackId) {
       return NextResponse.json({ error: 'Invalid track id' }, { status: 400 });
     }

@@ -1,4 +1,15 @@
 import type { Release, ReleaseRegistryItem } from "../types/release";
+import { toCanonicalTrackId } from "./track-id";
+
+function canonicalizeReleaseTrackIds(release: Release): Release {
+  return {
+    ...release,
+    tracks: (release.tracks || []).map((track) => ({
+      ...track,
+      id: toCanonicalTrackId(track.id),
+    })),
+  };
+}
 
 export async function loadReleaseRegistry(): Promise<ReleaseRegistryItem[]> {
   const response = await fetch("/tracks/releases.json", { cache: "no-store" });
@@ -18,7 +29,8 @@ export async function loadAllReleases(): Promise<Release[]> {
         return null;
       }
 
-      return response.json() as Promise<Release>;
+      const release = await (response.json() as Promise<Release>);
+      return canonicalizeReleaseTrackIds(release);
     }),
   );
 
@@ -38,5 +50,6 @@ export async function loadReleaseById(id: string): Promise<Release | null> {
 
   const response = await fetch(item.dataFile, { cache: "no-store" });
   if (!response.ok) return null;
-  return (await response.json()) as Release;
+  const release = (await response.json()) as Release;
+  return canonicalizeReleaseTrackIds(release);
 }

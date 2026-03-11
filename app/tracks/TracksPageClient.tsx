@@ -1,7 +1,7 @@
 'use client';
 
 import { useLanguage } from '../contexts/LanguageContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Pause, Play } from 'lucide-react';
@@ -61,8 +61,42 @@ export default function TracksPageClient() {
   const isSingleRelease = (release: Release) =>
     release.releaseType.trim().toLowerCase() === 'single';
 
-  const albumReleases = releases.filter((release) => !isSingleRelease(release));
-  const singleReleases = releases.filter((release) => isSingleRelease(release));
+  const releaseIndexMap = useMemo(
+    () => new Map(releases.map((release, index) => [release.id, index])),
+    [releases],
+  );
+
+  const albumReleases = useMemo(() => {
+    return releases
+      .filter((release) => !isSingleRelease(release))
+      .sort((a, b) => {
+        const aOrder = Number.isFinite(a.displayOrder) ? Number(a.displayOrder) : Number.POSITIVE_INFINITY;
+        const bOrder = Number.isFinite(b.displayOrder) ? Number(b.displayOrder) : Number.POSITIVE_INFINITY;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+
+        const aTime = new Date(a.releaseDate).getTime();
+        const bTime = new Date(b.releaseDate).getTime();
+        if (aTime !== bTime) return bTime - aTime;
+
+        return (releaseIndexMap.get(a.id) ?? 0) - (releaseIndexMap.get(b.id) ?? 0);
+      });
+  }, [releases, releaseIndexMap]);
+
+  const singleReleases = useMemo(() => {
+    return releases
+      .filter((release) => isSingleRelease(release))
+      .sort((a, b) => {
+        const aOrder = Number.isFinite(a.displayOrder) ? Number(a.displayOrder) : Number.POSITIVE_INFINITY;
+        const bOrder = Number.isFinite(b.displayOrder) ? Number(b.displayOrder) : Number.POSITIVE_INFINITY;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+
+        const aTime = new Date(a.releaseDate).getTime();
+        const bTime = new Date(b.releaseDate).getTime();
+        if (aTime !== bTime) return bTime - aTime;
+
+        return (releaseIndexMap.get(a.id) ?? 0) - (releaseIndexMap.get(b.id) ?? 0);
+      });
+  }, [releases, releaseIndexMap]);
 
   const renderReleasesGrid = (items: Release[]) => (
     <div className="flex flex-wrap gap-3">
